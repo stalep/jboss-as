@@ -137,6 +137,11 @@ public interface CommandContext {
     void bindClient(ModelControllerClient newClient);
 
     /**
+     * Bind the controller to an existing, connected client with host and port
+     */
+    void bindClient(ModelControllerClient newClient, String host, int port);
+
+    /**
      * Connects the controller client using the default host and the port.
      * It simply calls connectController(null, -1).
      *

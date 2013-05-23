@@ -40,13 +40,17 @@ public class AbstractCliTestBase {
 
     public static void initCLI() throws Exception {
         if (cli == null) {
-            cli = new CLIWrapper(true);
+            cli = CLIWrapper.getInstance();
+            cli.init(null);
+            cli.connect(null);
         }
     }
 
     public static void initCLI(String cliAddress) throws Exception {
         if (cli == null) {
-            cli = new CLIWrapper(true, cliAddress);
+            cli = CLIWrapper.getInstance();
+            cli.init(null);
+            cli.connect(cliAddress);
         }
     }
 

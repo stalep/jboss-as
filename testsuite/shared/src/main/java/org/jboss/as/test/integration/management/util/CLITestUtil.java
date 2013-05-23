@@ -39,8 +39,8 @@ import org.jboss.as.test.shared.TestSuiteEnvironment;
 public class CLITestUtil {
 
     private static final String JBOSS_CLI_CONFIG = "jboss.cli.config";
-    private static final String JREADLINE_TERMINAL = "jreadline.terminal";
-    private static final String JREADLINE_TEST_TERMINAL = "org.jboss.jreadline.terminal.TestTerminal";
+    private static final String AESH_TERMINAL = "aesh.terminal";
+    private static final String AESH_TEST_TERMINAL = "org.jboss.aesh.terminal.TestTerminal";
 
     private static final String serverAddr = TestSuiteEnvironment.getServerAddress();
     private static final int serverPort = TestSuiteEnvironment.getServerPort();
@@ -57,7 +57,7 @@ public class CLITestUtil {
     }
 
     public static CommandContext getCommandContext(OutputStream out) throws CliInitializationException {
-        SecurityActions.setSystemProperty(JREADLINE_TERMINAL, JREADLINE_TEST_TERMINAL);
+        SecurityActions.setSystemProperty(AESH_TERMINAL, AESH_TEST_TERMINAL);
         setJBossCliConfig();
         return CommandContextFactory.getInstance().newCommandContext(serverAddr, serverPort, null, null, null, out);
     }

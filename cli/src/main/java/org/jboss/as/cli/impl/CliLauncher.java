@@ -50,15 +50,15 @@ public class CliLauncher {
         int exitCode = 0;
         CommandContext cmdCtx = null;
         boolean gui = false;
+        String argError = null;
+        List<String> commands = null;
+        File file = null;
+        boolean connect = false;
+        boolean version = false;
         try {
-            String argError = null;
-            List<String> commands = null;
-            File file = null;
-            boolean connect = false;
             String defaultControllerProtocol = "http-remoting";
             String defaultControllerHost = null;
             int defaultControllerPort = -1;
-            boolean version = false;
             String username = null;
             char[] password = null;
             int connectionTimeout = -1;
@@ -275,11 +275,10 @@ public class CliLauncher {
             if(cmdCtx != null && cmdCtx.getExitCode() != 0) {
                 exitCode = cmdCtx.getExitCode();
             }
-            if (!gui) {
+            if (argError != null || version || file != null || commands != null) {
                 System.exit(exitCode);
             }
         }
-        System.exit(exitCode);
     }
 
     private static CommandContext initCommandContext(String defaultProtocol, String defaultHost, int defaultPort, String username, char[] password, boolean initConsole, boolean connect, final int connectionTimeout) throws CliInitializationException {

@@ -31,6 +31,7 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.test.integration.management.util.CLITestUtil;
+import org.jboss.as.test.integration.management.util.CLIWrapper;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -51,9 +52,14 @@ public class TryCatchFinallyTestCase {
 
     private static ByteArrayOutputStream cliOut;
 
+    private static CLIWrapper cli;
+
     @BeforeClass
     public static void setup() throws Exception {
-        cliOut = new ByteArrayOutputStream();
+        cli = CLIWrapper.getInstance();
+        cli.init(null);
+        cliOut = cli.getConsoleOut();
+
     }
 
     @AfterClass
@@ -64,7 +70,11 @@ public class TryCatchFinallyTestCase {
     @Test
     public void testSuccessfulTry() throws Exception {
         cliOut.reset();
-        final CommandContext ctx = CLITestUtil.getCommandContext(cliOut);
+        //final CommandContext ctx = CLITestUtil.getCommandContext(cliOut);
+        cli.init(null);
+        cliOut = cli.getConsoleOut();
+        final CommandContext ctx = cli.getCommandContext();
+
         try {
             ctx.connectController();
             ctx.handle("try");
@@ -75,9 +85,9 @@ public class TryCatchFinallyTestCase {
             cliOut.reset();
             ctx.handle(getReadPropertyReq());
             assertEquals("try", getValue());
-        } finally {
             ctx.handleSafe(getRemovePropertyReq());
-            ctx.terminateSession();
+        } finally {
+            cli.quit();
             cliOut.reset();
         }
     }
@@ -85,7 +95,9 @@ public class TryCatchFinallyTestCase {
     @Test
     public void testCatch() throws Exception {
         cliOut.reset();
-        final CommandContext ctx = CLITestUtil.getCommandContext(cliOut);
+        cli.init(null);
+        cliOut = cli.getConsoleOut();
+        final CommandContext ctx = cli.getCommandContext();
         try {
             ctx.connectController();
             ctx.handle("try");
@@ -98,7 +110,8 @@ public class TryCatchFinallyTestCase {
             assertEquals("catch", getValue());
         } finally {
             ctx.handleSafe(getRemovePropertyReq());
-            ctx.terminateSession();
+            //ctx.terminateSession();
+            cli.quit();
             cliOut.reset();
         }
     }
@@ -106,7 +119,9 @@ public class TryCatchFinallyTestCase {
     @Test
     public void testErrorInCatch() throws Exception {
         cliOut.reset();
-        final CommandContext ctx = CLITestUtil.getCommandContext(cliOut);
+        cli.init(null);
+        cliOut = cli.getConsoleOut();
+        final CommandContext ctx = cli.getCommandContext();
         try {
             ctx.connectController();
             ctx.handle("try");
@@ -116,10 +131,10 @@ public class TryCatchFinallyTestCase {
             ctx.handle("end-try");
             fail("catch is expected to throw an exception");
         } catch(CommandLineException e) {
+            ctx.handleSafe(getRemovePropertyReq());
             // expected
         } finally {
-            ctx.handleSafe(getRemovePropertyReq());
-            ctx.terminateSession();
+            cli.quit();
             cliOut.reset();
         }
     }
@@ -127,7 +142,9 @@ public class TryCatchFinallyTestCase {
     @Test
     public void testTryFinally() throws Exception {
         cliOut.reset();
-        final CommandContext ctx = CLITestUtil.getCommandContext(cliOut);
+        cli.init(null);
+        cliOut = cli.getConsoleOut();
+        final CommandContext ctx = cli.getCommandContext();
         try {
             ctx.connectController();
             ctx.handle("try");
@@ -138,9 +155,9 @@ public class TryCatchFinallyTestCase {
             cliOut.reset();
             ctx.handle(getReadPropertyReq());
             assertEquals("finally", getValue());
-        } finally {
             ctx.handleSafe(getRemovePropertyReq());
-            ctx.terminateSession();
+        } finally {
+            cli.quit();
             cliOut.reset();
         }
     }
@@ -148,7 +165,10 @@ public class TryCatchFinallyTestCase {
     @Test
     public void testErrorInTryCatchFinally() throws Exception {
         cliOut.reset();
-        final CommandContext ctx = CLITestUtil.getCommandContext(cliOut);
+        cli.init(null);
+        cliOut = cli.getConsoleOut();
+        cli.connect(null);
+        final CommandContext ctx = cli.getCommandContext();
         try {
             ctx.connectController();
             ctx.handle("try");
@@ -161,9 +181,9 @@ public class TryCatchFinallyTestCase {
             cliOut.reset();
             ctx.handle(getReadPropertyReq());
             assertEquals("finally", getValue());
-        } finally {
             ctx.handleSafe(getRemovePropertyReq());
-            ctx.terminateSession();
+        } finally {
+            cli.quit();
             cliOut.reset();
         }
     }
@@ -171,7 +191,10 @@ public class TryCatchFinallyTestCase {
     @Test
     public void testErrorInTryErroInCatchFinally() throws Exception {
         cliOut.reset();
-        final CommandContext ctx = CLITestUtil.getCommandContext(cliOut);
+        cli.init(null);
+        cliOut = cli.getConsoleOut();
+        cli.connect(null);
+        final CommandContext ctx = cli.getCommandContext();
         try {
             ctx.connectController();
             ctx.handle("try");
@@ -186,9 +209,9 @@ public class TryCatchFinallyTestCase {
             cliOut.reset();
             ctx.handle(getReadPropertyReq());
             assertEquals("finally", getValue());
-        } finally {
             ctx.handleSafe(getRemovePropertyReq());
-            ctx.terminateSession();
+        } finally {
+            cli.quit();
             cliOut.reset();
         }
     }
@@ -196,7 +219,9 @@ public class TryCatchFinallyTestCase {
     @Test
     public void testErrorInFinally() throws Exception {
         cliOut.reset();
-        final CommandContext ctx = CLITestUtil.getCommandContext(cliOut);
+        cli.init(null);
+        cliOut = cli.getConsoleOut();
+        final CommandContext ctx = cli.getCommandContext();
         try {
             ctx.connectController();
             ctx.handle("try");
@@ -209,9 +234,9 @@ public class TryCatchFinallyTestCase {
             cliOut.reset();
             ctx.handle(getReadPropertyReq());
             assertEquals("try", getValue());
-        } finally {
             ctx.handleSafe(getRemovePropertyReq());
-            ctx.terminateSession();
+        } finally {
+            cli.quit();
             cliOut.reset();
         }
     }

@@ -42,61 +42,55 @@ import org.junit.Assert;
  */
 public class CLIWrapper {
 
-    private final CommandContext ctx;
+    private CommandContext ctx;
 
     private ByteArrayOutputStream consoleOut;
+    private String username = Authentication.USERNAME;
+    private String password = Authentication.PASSWORD;
+
+    private static class CLIWrapperHolder {
+        static final CLIWrapper INSTANCE = new CLIWrapper();
+    }
+
+    public static CLIWrapper getInstance() {
+        return CLIWrapperHolder.INSTANCE;
+    }
 
     /**
      * Creates new CLI wrapper.
-     *
-     * @throws Exception
      */
-    public CLIWrapper() throws Exception {
-        this(false);
+    private CLIWrapper() {
+    }
+
+    public synchronized void init(InputStream consoleInput) throws CliInitializationException {
+        if(ctx == null) {
+            consoleOut = new ByteArrayOutputStream();
+            final char[] password = getPassword() == null ? null : getPassword().toCharArray();
+            System.setProperty("aesh.terminal","org.jboss.aesh.terminal.TestTerminal");
+            ctx = CLITestUtil.getCommandContext(
+                    TestSuiteEnvironment.getServerAddress(), TestSuiteEnvironment.getServerPort(), getUsername(), password,
+                    consoleInput, consoleOut);
+        }
     }
 
     /**
-     * Creates new CLI wrapper. If the connect parameter is set to true the CLI will connect to the server using
-     * <code>connect</code> command.
+     *  Connect to the server using <code>connect</code> command.
      *
-     * @param connect indicates if the CLI should connect to server automatically.
-     * @param cliArgs specifies additional CLI command line arguments
-     * @throws Exception
-     */
-    public CLIWrapper(boolean connect) throws Exception {
-        this(connect, null);
-    }
-
-    /**
-     * Creates new CLI wrapper. If the connect parameter is set to true the CLI will connect to the server using
-     * <code>connect</code> command.
-     *
-     * @param connect indicates if the CLI should connect to server automatically.
      * @param cliAddress The default name of the property containing the cli address. If null the value of the {@code node0} property is
      * used, and if that is absent {@code localhost} is used
-     * @param cliArgs specifies additional CLI command line arguments
      */
-    public CLIWrapper(boolean connect, String cliAddress) throws CliInitializationException {
-
-        consoleOut = new ByteArrayOutputStream();
-        final char[] password = getPassword() == null ? null : getPassword().toCharArray();
-        System.setProperty("aesh.terminal","org.jboss.aesh.terminal.TestTerminal");
-        ctx = CLITestUtil.getCommandContext(
-                TestSuiteEnvironment.getServerAddress(), TestSuiteEnvironment.getServerPort(), getUsername(), password,
-                createConsoleInput(), consoleOut);
-
-        if (!connect) {
-            return;
-        }
+    public synchronized void connect(String cliAddress) throws CliInitializationException {
+        if(ctx == null)
+            init(null);
         Assert.assertTrue(sendConnect(cliAddress));
-    }
-
-    protected InputStream createConsoleInput() {
-        return null;
     }
 
     public boolean isConnected() {
         return ctx.getModelControllerClient() != null;
+    }
+
+    public CommandContext getCommandContext() {
+        return ctx;
     }
 
     /**
@@ -114,15 +108,21 @@ public class CLIWrapper {
      * property and use that as the address. If the system property is not set {@code localhost} will
      * be used
      */
-    public boolean sendConnect(String cliAddress) {
-        String addr = cliAddress != null ? cliAddress : TestSuiteEnvironment.getServerAddress();
-        try {
-            ctx.connectController("http-remoting", addr, TestSuiteEnvironment.getServerPort());
-            return true;
-        } catch (CommandLineException e) {
-            e.printStackTrace();
-            return false;
+    public synchronized boolean sendConnect(String cliAddress) {
+        if(ctx != null ) {
+            //if we're already connected return true
+            if(ctx.getModelControllerClient() != null)
+                return true;
+            String addr = cliAddress != null ? cliAddress : TestSuiteEnvironment.getServerAddress();
+            try {
+                ctx.connectController("http-remoting", addr, TestSuiteEnvironment.getServerPort());
+                return true;
+            } catch (CommandLineException e) {
+                e.printStackTrace();
+                return false;
+            }
         }
+        return false;
     }
 
     /**
@@ -169,6 +169,10 @@ public class CLIWrapper {
         return new String(consoleOut.toByteArray());
     }
 
+    public ByteArrayOutputStream getConsoleOut() {
+        return consoleOut;
+    }
+
     /**
      * Consumes all available output from CLI and converts the output to ModelNode operation format
      *
@@ -189,7 +193,10 @@ public class CLIWrapper {
      * @throws Exception
      */
     public synchronized void quit() {
-        ctx.terminateSession();
+        if(ctx != null) {
+            ctx.terminateSession();
+            ctx = null;
+        }
     }
 
     /**
@@ -198,14 +205,22 @@ public class CLIWrapper {
      * @return true if and only if the CLI has finished.
      */
     public boolean hasQuit() {
-        return ctx.isTerminated();
+        return ctx == null || ctx.isTerminated();
     }
 
-    protected String getUsername() {
-        return Authentication.USERNAME;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
-    protected String getPassword() {
-        return Authentication.PASSWORD;
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }

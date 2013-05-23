@@ -28,6 +28,7 @@ import java.io.OutputStream;
 import java.util.Collection;
 import java.util.List;
 
+import org.jboss.aesh.console.ConsoleCallback;
 import org.jboss.as.cli.CliInitializationException;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandHistory;
@@ -71,20 +72,29 @@ public interface Console {
 
     int getTerminalHeight();
 
+    void start();
+
+    void stop();
+
+    boolean isRunning();
+
+    void setPrompt(String prompt);
+
+    void setCallback(ConsoleCallback consoleCallback);
+
     static final class Factory {
 
-        public static Console getConsole(CommandContext ctx) throws CliInitializationException {
-            return getConsole(ctx, null, null);
+        public static Console getConsole(CommandContext ctx, ConsoleCallback callback) throws CliInitializationException {
+            return getConsole(ctx, null, null, callback);
         }
 
-        public static Console getConsole(final CommandContext ctx, InputStream is, OutputStream os) throws CliInitializationException {
+        public static Console getConsole(final CommandContext ctx,
+                                         InputStream is, OutputStream os,
+                                         ConsoleCallback callback) throws CliInitializationException {
 
             org.jboss.aesh.console.Console aeshConsole = null;
-            try {
-                aeshConsole = new org.jboss.aesh.console.Console();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            aeshConsole = org.jboss.aesh.console.Console.getInstance();
+            aeshConsole.setConsoleCallback(callback);
 
             final org.jboss.aesh.console.Console finalAeshConsole = aeshConsole;
             return new Console() {
@@ -172,23 +182,62 @@ public interface Console {
                 }
 
                 @Override
+                public void start() {
+                    try {
+                        console.reset();
+                        console.start();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void stop() {
+                    try {
+                        console.stop();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public boolean isRunning() {
+                    return console != null && console.isRunning();
+                }
+
+                @Override
+                public void setPrompt(String prompt) {
+                    try {
+                        console.setPrompt(new Prompt(prompt));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
                 public String readLine(String prompt) {
+                    /*
                     try {
                         return console.read(prompt).getBuffer();
                     } catch (IOException e) {
                         e.printStackTrace();
                         return null;
                     }
+                    */
+                    return null;
                 }
 
                 @Override
                 public String readLine(String prompt, Character mask) {
+                    /*
                     try {
                         return console.read(new Prompt(prompt), mask).getBuffer();
                     } catch (IOException e) {
                         e.printStackTrace();
                         return null;
                     }
+                    */
+                    return null;
                 }
 
                 @Override
@@ -199,6 +248,11 @@ public interface Console {
                 @Override
                 public int getTerminalHeight() {
                     return console.getTerminalSize().getHeight();
+                }
+
+                @Override
+                public void setCallback(ConsoleCallback consoleCallback) {
+                    console.setConsoleCallback(consoleCallback);
                 }
 
             class HistoryImpl implements CommandHistory {
@@ -233,7 +287,9 @@ public interface Console {
                 public int getMaxSize() {
                     return Settings.getInstance().getHistorySize();
                 }
-            }};
+
+            }
+            };
         }
     }
 }

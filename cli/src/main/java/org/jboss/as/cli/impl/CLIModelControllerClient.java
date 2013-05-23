@@ -67,9 +67,53 @@ public class CLIModelControllerClient extends AbstractModelControllerClient {
     private static final OptionMap DEFAULT_OPTIONS = OptionMap.create(RemotingOptions.TRANSMIT_WINDOW_SIZE, ProtocolChannelClient.Configuration.DEFAULT_WINDOW_SIZE,
             RemotingOptions.RECEIVE_WINDOW_SIZE, ProtocolChannelClient.Configuration.DEFAULT_WINDOW_SIZE);
 
-    private static final ThreadPoolExecutor executorService;
-    private static final Endpoint endpoint;
-    static {
+    private ThreadPoolExecutor executorService;
+    private Endpoint endpoint;
+
+    private final Object lock = "lock";
+
+    private final CallbackHandler handler;
+    private final SSLContext sslContext;
+    private final ConnectionCloseHandler closeHandler;
+
+    private final ManagementChannelHandler channelAssociation;
+    private ManagementClientChannelStrategy strategy;
+    private final ProtocolChannelClient.Configuration channelConfig;
+    private boolean closed;
+
+    CLIModelControllerClient(final String protocol, CallbackHandler handler, String hostName, int connectionTimeout,
+            final ConnectionCloseHandler closeHandler, int port, SSLContext sslContext) throws IOException {
+        init();
+        this.handler = handler;
+        this.sslContext = sslContext;
+        this.closeHandler = closeHandler;
+
+        this.channelAssociation = new ManagementChannelHandler(new ManagementClientChannelStrategy() {
+            @Override
+            public Channel getChannel() throws IOException {
+                return getOrCreateChannel();
+            }
+
+            @Override
+            public void close() throws IOException {
+            }
+        }, executorService, this);
+
+        channelConfig = new ProtocolChannelClient.Configuration();
+        try {
+            channelConfig.setUri(new URI(protocol +"://" + formatPossibleIpv6Address(hostName) +  ":" + port));
+        } catch (URISyntaxException e) {
+            throw new IOException("Failed to create URI" , e);
+        }
+        channelConfig.setOptionMap(DEFAULT_OPTIONS);
+        if(connectionTimeout > 0) {
+            channelConfig.setConnectionTimeout(connectionTimeout);
+        }
+        channelConfig.setEndpoint(endpoint);
+
+    }
+
+    private void init() {
         final BlockingQueue<Runnable> workQueue = new LinkedBlockingQueue<Runnable>();
         final ThreadFactory threadFactory = new JBossThreadFactory(new ThreadGroup("cli-remoting"), Boolean.FALSE, null,
                 "%G - %t", null, null, doPrivileged(GetAccessControlContextAction.getInstance()));
@@ -98,48 +142,6 @@ public class CLIModelControllerClient extends AbstractModelControllerClient {
                 } catch (IOException e) {}
             }
         });
-    }
-
-    private final Object lock = "lock";
-
-    private final CallbackHandler handler;
-    private final SSLContext sslContext;
-    private final ConnectionCloseHandler closeHandler;
-
-    private final ManagementChannelHandler channelAssociation;
-    private ManagementClientChannelStrategy strategy;
-    private final ProtocolChannelClient.Configuration channelConfig;
-    private boolean closed;
-
-    CLIModelControllerClient(final String protocol, CallbackHandler handler, String hostName, int connectionTimeout,
-            final ConnectionCloseHandler closeHandler, int port, SSLContext sslContext) throws IOException {
-        this.handler = handler;
-        this.sslContext = sslContext;
-        this.closeHandler = closeHandler;
-
-        this.channelAssociation = new ManagementChannelHandler(new ManagementClientChannelStrategy() {
-            @Override
-            public Channel getChannel() throws IOException {
-                return getOrCreateChannel();
-            }
-
-            @Override
-            public void close() throws IOException {
-            }
-        }, executorService, this);
-
-        channelConfig = new ProtocolChannelClient.Configuration();
-        try {
-            channelConfig.setUri(new URI(protocol +"://" + formatPossibleIpv6Address(hostName) +  ":" + port));
-        } catch (URISyntaxException e) {
-            throw new IOException("Failed to create URI" , e);
-        }
-        channelConfig.setOptionMap(DEFAULT_OPTIONS);
-        if(connectionTimeout > 0) {
-            channelConfig.setConnectionTimeout(connectionTimeout);
-        }
-        channelConfig.setEndpoint(endpoint);
-
     }
 
     @Override
@@ -191,7 +193,14 @@ public class CLIModelControllerClient extends AbstractModelControllerClient {
                 Thread.currentThread().interrupt();
             }
             lock.notifyAll();
-        }
+
+            executorService.shutdown();
+            try {
+                executorService.awaitTermination(1, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {}
+            try {
+                endpoint.close();
+            } catch (IOException e) {}}
     }
 
     public ModelNode execute(ModelNode operation, boolean awaitClose) throws IOException {

@@ -39,7 +39,9 @@ public class BasicOpsTestCase {
 
     @Test
     public void testConnect() throws Exception {
-        CLIWrapper cli = new CLIWrapper(false);
+        CLIWrapper cli = CLIWrapper.getInstance();
+        cli.quit();
+        cli.init(null);
 
         assertFalse(cli.isConnected());
         cli.sendLine("connect " + TestSuiteEnvironment.getServerAddress() + ":" + TestSuiteEnvironment.getServerPort());
@@ -50,7 +52,9 @@ public class BasicOpsTestCase {
 
     @Test
     public void testLs() throws Exception {
-        CLIWrapper cli = new CLIWrapper(true);
+        CLIWrapper cli = CLIWrapper.getInstance();
+        cli.init(null);
+        cli.connect(null);
         cli.sendLine("ls");
         String ls = cli.readOutput();
 
