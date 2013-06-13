@@ -25,6 +25,7 @@ import java.io.File;
 import java.util.Collection;
 
 import org.jboss.as.cli.CliConfig;
+import org.jboss.as.cli.CliConnection;
 import org.jboss.as.cli.CliEventListener;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
@@ -68,6 +69,7 @@ public class MockCommandContext implements CommandContext {
     private boolean resolveParameterValues;
 
     private boolean silent;
+    private CliConnection cliConnection;
 
     public void parseCommandLine(String buffer) throws CommandFormatException {
         try {
@@ -369,5 +371,10 @@ public class MockCommandContext implements CommandContext {
     @Override
     public int getTerminalHeight() {
         return -1;
+    }
+
+    @Override
+    public void setCliConnection(CliConnection cliConnection) {
+        this.cliConnection = cliConnection;
     }
 }

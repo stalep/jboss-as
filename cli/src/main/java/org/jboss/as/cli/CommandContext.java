@@ -393,4 +393,7 @@ public interface CommandContext {
      *          -1 otherwise
      */
     int getTerminalHeight();
+
+    void setCliConnection(CliConnection cliConnection);
+
 }

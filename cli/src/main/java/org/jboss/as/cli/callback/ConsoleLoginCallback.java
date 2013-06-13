@@ -23,13 +23,13 @@ package org.jboss.as.cli.callback;
 
 import org.jboss.aesh.console.ConsoleCallback;
 import org.jboss.aesh.console.ConsoleOutput;
-import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.CliConnection;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.impl.Console;
+import org.jboss.as.cli.impl.ConsoleLoginState;
 import org.jboss.as.cli.impl.ModelControllerClientFactory;
 import org.jboss.as.cli.operation.impl.DefaultOperationRequestBuilder;
-import org.jboss.as.cli.security.LazyDelagatingTrustManager;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.as.protocol.StreamUtils;
 import org.jboss.logging.Logger;
@@ -38,7 +38,6 @@ import org.jboss.sasl.util.HexConverter;
 import java.security.MessageDigest;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslException;
@@ -56,120 +55,85 @@ public class ConsoleLoginCallback implements ConsoleCallback {
     private static final String[] FINGERPRINT_ALGORITHMS = new String[] { "MD5", "SHA1" };
 
     private static final Logger log = Logger.getLogger(ConsoleLoginCallback.class);
-    private CommandContext commandContext;
     private Console console;
-    private String username;
-    private String password;
-    private String defaultHost;
-    private String defaultProtocol;
-    private int defaultPort;
-    private int connectionTimeout;
-    private SSLContext sslContext;
-    private ModelControllerClient modelClient;
-    private LoginState loginState;
+    private CliConnection cliConnection;
 
 
-    /** The TrustManager in use by the SSLContext, a reference is kept to rejected certificates can be captured. */
-    private LazyDelagatingTrustManager trustManager;
-
-    public ConsoleLoginCallback(CommandContext commandContext,
-                                LazyDelagatingTrustManager trustManager,
-                                Console console,
-                                String defaultHost,
-                                int defaultControlerPort,
-                                String defaultProtocol,
-                                int timeout,
-                                SSLContext sslContext) {
-        this.trustManager = trustManager;
-        this.commandContext = commandContext;
+    public ConsoleLoginCallback(Console console, CliConnection cliConnection) {
         this.console = console;
-        this.defaultHost = defaultHost;
-        this.defaultPort = defaultControlerPort;
-        this.defaultProtocol = defaultProtocol;
-        this.connectionTimeout = timeout;
-        this.sslContext = sslContext;
-        this.loginState = LoginState.TRY_CONNECT;
+        this.cliConnection = cliConnection;
+
         setup();
     }
 
     @Override
     public int readConsoleOutput(ConsoleOutput output) throws IOException {
         //we are expecting user to accept (or not) certificate
-        if(loginState == LoginState.SERTIFICATE) {
+        if(cliConnection.getState() == ConsoleLoginState.SERTIFICATE) {
             String response = output.getBuffer();
             if (response != null && response.length() == 1) {
                 switch (response.toLowerCase(Locale.ENGLISH).charAt(0)) {
                     case 'n':
                         disconnect();
                     case 't':
-                        trustManager.storeChainTemporarily(trustManager.getLastFailedCertificateChain());
+                        cliConnection.getTrustManager().storeChainTemporarily(cliConnection.getTrustManager().getLastFailedCertificateChain());
                         connect();
                     case 'p':
-                        if (trustManager.isModifyTrustStore()) {
-                            trustManager.storeChainPermenantly(trustManager.getLastFailedCertificateChain());
+                        if (cliConnection.getTrustManager().isModifyTrustStore()) {
+                            cliConnection.getTrustManager().storeChainPermenantly(cliConnection.getTrustManager().getLastFailedCertificateChain());
                             connect();
                         }
                 }
             }
         }
-        else if(loginState == LoginState.USERNAME) {
-            username = output.getBuffer();
-            console.setPrompt("Password: ");
-            loginState = LoginState.PASSWORD;
-        }
-        else if(loginState == LoginState.PASSWORD) {
-            password = output.getBuffer();
-            if(password != null && password.length() > 0)
-                connect();
-        }
         return 0;
     }
 
     private void setup() {
-        if(loginState == LoginState.TRY_CONNECT) {
+        if(cliConnection.getState() == ConsoleLoginState.DISCONNECTED ||
+                cliConnection.getState() == ConsoleLoginState.CONNECTED) {
             try {
                 connect();
             }
             catch (IOException e) {
-                console.setCallback(this);
-                console.setPrompt("Username: ");
-                loginState = LoginState.USERNAME;
+                printLine("Unable to authenticate, type username and password manually:");
+                cliConnection.setState( ConsoleLoginState.USERNAME);
             }
-        }
-        //atm this can never happen
-        else {
-            console.setCallback(this);
-            console.setPrompt("Username: ");
-            loginState = LoginState.USERNAME;
         }
     }
 
     //cleanup and go back to initial status
     private void disconnect() {
-        commandContext.bindClient(null);
+       cliConnection.getCommandContext().bindClient(null);
     }
 
     private void connect() throws IOException {
-        CallbackHandler cbh = new AuthenticationCallbackHandler(username, password);
+        CallbackHandler cbh = new AuthenticationCallbackHandler(cliConnection.getUsername(), cliConnection.getPassword());
         if(log.isDebugEnabled()) {
-            log.debug("connecting to " +  + ':' + defaultPort + " as " + username);
+            log.debug("connecting to " +  + ':' + cliConnection.getHost() + " as " + cliConnection.getUsername());
         }
-        modelClient = ModelControllerClientFactory.CUSTOM.
-                getClient(defaultProtocol, defaultHost, defaultPort, cbh, sslContext, connectionTimeout,
-                        (ModelControllerClientFactory.ConnectionCloseHandler) commandContext);
+        ModelControllerClient modelClient = ModelControllerClientFactory.CUSTOM.
+                getClient(cliConnection.getProtocol(), cliConnection.getHost(), cliConnection.getPort(),
+                        cbh, cliConnection.getSslContext(), cliConnection.getConnectionTimeout(),
+                        (ModelControllerClientFactory.ConnectionCloseHandler) cliConnection.getCommandContext());
 
         try {
             tryConnection(modelClient);
-            if(loginState == LoginState.CONNECT) {
+            if(cliConnection.getState() == ConsoleLoginState.CONNECTED) {
                 //call commandContext and confirm that we have connection
-                commandContext.bindClient(modelClient, defaultHost, defaultPort);
+                cliConnection.setModelClient(modelClient);
+                cliConnection.getCommandContext().bindClient(modelClient, cliConnection.getHost(),
+                        cliConnection.getPort());
+                //commandContext.bindClient(modelClient, defaultHost, defaultPort);
+
             }
-            else if(loginState == LoginState.NOT_CONNECTING) {
+            else if(cliConnection.getState() == ConsoleLoginState.DISCONNECTED) {
                 //call disconnect or just start with username again
                 disconnect();
             }
             //the other states will be caught by user input
-        } catch (CommandLineException e) {
+        }
+        catch (CommandLineException e) {
             console.print(e.getMessage());
             console.printNewLine();
         }
@@ -179,30 +143,46 @@ public class ConsoleLoginCallback implements ConsoleCallback {
     /**
      * Used to make a call to the server to verify that it is possible to connect.
      */
-    private void tryConnection(final ModelControllerClient client) throws CommandLineException {
+    private void tryConnection(final ModelControllerClient client) throws CommandLineException,IOException {
         try {
             DefaultOperationRequestBuilder builder = new DefaultOperationRequestBuilder();
             builder.setOperationName(Util.READ_ATTRIBUTE);
             builder.addProperty(Util.NAME, Util.NAME);
 
             client.execute(builder.buildRequest());
-            loginState = LoginState.CONNECT;
+            cliConnection.setState(ConsoleLoginState.CONNECTED);
             // We don't actually care what the response is we just want to be sure the ModelControllerClient
             // does not throw an Exception.
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
+            log.info("Connection exception: ",e);
             try {
-                if(e != null) {
-                    if (e instanceof SaslException) {
-                        throw new CommandLineException("Unable to authenticate against controller at " + defaultHost + ":" + defaultPort, e);
+                Throwable current = e;
+                while(current != null) {
+                    if (current instanceof SaslException) {
+                        //if either are null, we'll ask for username/password
+                        if(cliConnection.isUsernameOrPasswordNull())
+                            throw new IOException(current);
+                        else {
+                            //console.setPrompt("[DISconnected /] ");
+                            cliConnection.setUsername(null);
+                            cliConnection.setPassword(null);
+                            throw new CommandLineException("\nUnable to authenticate against controller at " +
+                                    cliConnection.getHost()+ ":" + cliConnection.getPort(), current);
+                        }
                     }
-                    if (e instanceof SSLException) {
+                    if (current instanceof SSLException) {
                         handleSSLFailure();
                             //throw new CommandLineException("Unable to negotiate SSL connection with controller at " + defaultHost + ":" + defaultPort);
                     }
+                    current = current.getCause();
                 }
                 // We don't know what happened, most likely a timeout.
-                throw new CommandLineException("The controller is not available at " + defaultHost + ":" + defaultPort, e);
-            } finally {
+                log.info("Dont know what happened: ",e);
+                throw new CommandLineException("The controller is not available at " +
+                        cliConnection.getHost()+ ":" + cliConnection.getPort(), e);
+            }
+            finally {
                 StreamUtils.safeClose(client);
             }
         }
@@ -214,8 +194,8 @@ public class ConsoleLoginCallback implements ConsoleCallback {
      */
     private void handleSSLFailure() throws CommandLineException {
         Certificate[] lastChain;
-        if (trustManager == null || (lastChain = trustManager.getLastFailedCertificateChain()) == null) {
-            loginState = LoginState.NOT_CONNECTING;
+        if (cliConnection.getTrustManager() == null || (lastChain = cliConnection.getTrustManager().getLastFailedCertificateChain()) == null) {
+            cliConnection.setState( ConsoleLoginState.DISCONNECTED);
             return;
         }
         //error("Unable to connect due to unrecognised server certificate");
@@ -234,13 +214,13 @@ public class ConsoleLoginCallback implements ConsoleCallback {
             }
         }
 
-        if (trustManager.isModifyTrustStore()) {
+        if (cliConnection.getTrustManager().isModifyTrustStore()) {
             console.print("Accept certificate? [N]o, [T]emporarily, [P]ermenantly : ");
         } else {
             console.print("Accept certificate? [N]o, [T]emporarily : ");
         }
         console.printNewLine();
-        loginState = LoginState.SERTIFICATE;
+        cliConnection.setState( ConsoleLoginState.SERTIFICATE);
     }
 
     private void printLine(String line) {
@@ -279,13 +259,4 @@ public class ConsoleLoginCallback implements ConsoleCallback {
 
         return sb.toString();
     }
-}
-
-enum LoginState {
-    TRY_CONNECT,
-    USERNAME,
-    PASSWORD,
-    SERTIFICATE,
-    NOT_CONNECTING,
-    CONNECT
 }
