@@ -148,26 +148,6 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     private boolean domainMode;
     /** the controller client */
     private ModelControllerClient client;
-    /** the default controller protocol */
-    //private String defaultControllerProtocol;
-    /** the default controller host */
-    //private String defaultControllerHost;
-    /** the default controller port */
-    //private int defaultControllerPort;
-    /** the host of the controller */
-    //private String controllerHost;
-    /** the port of the controller */
-    //private int controllerPort = -1;
-    /** the command line specified username */
-    //private String username;
-    /** the command line specified password */
-    //private char[] password;
-    /** the time to connect to a controller */
-    //private final int connectionTimeout;
-    /** The SSLContext when managed by the CLI */
-    //private SSLContext sslContext;
-    /** The TrustManager in use by the SSLContext, a reference is kept to rejected certificates can be captured. */
-    //private LazyDelagatingTrustManager trustManager;
     /** various key/value pairs */
     private Map<String, Object> map = new HashMap<String, Object>();
     /** operation request address prefix */
@@ -200,8 +180,6 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     private boolean silent;
 
     private ConsoleCallback defaultConsoleCallback;
-
-    private ConsoleLoginState loginState = ConsoleLoginState.DISCONNECTED;
 
     private CliConnection cliConnection;
 
@@ -241,27 +219,6 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
 
         initCliConnection(username, password, defaultControllerHost, config.getConnectionTimeout(),
                 defaultControllerPort, defaultControllerProtocol, config.getSslConfig());
-        /*
-        this.username = username;
-        this.password = password;
-        this.connectionTimeout = connectionTimeout != -1 ? connectionTimeout : config.getConnectionTimeout();
-
-        if (defaultControllerHost != null) {
-            this.defaultControllerHost = defaultControllerHost;
-        } else {
-            this.defaultControllerHost = config.getDefaultControllerHost();
-        }
-        if (defaultControllerPort != -1) {
-            this.defaultControllerPort = defaultControllerPort;
-        } else {
-            this.defaultControllerPort = config.getDefaultControllerPort();
-        }
-        if(defaultControllerProtocol != null) {
-            this.defaultControllerProtocol = defaultControllerProtocol;
-        } else {
-            this.defaultControllerProtocol = config.getDefaultControllerProtocol();
-        }
-        */
 
         resolveParameterValues = config.isResolveParameterValues();
         silent = config.isSilent();
@@ -289,25 +246,6 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
 
         initCliConnection(username, password, defaultControllerHost, config.getConnectionTimeout(),
                 defaultControllerPort, config.getDefaultControllerProtocol(), config.getSslConfig());
-
-        /*
-        this.username = username;
-        this.password = password;
-        this.connectionTimeout = config.getConnectionTimeout();
-
-        if (defaultControllerHost != null) {
-            this.defaultControllerHost = defaultControllerHost;
-        } else {
-            this.defaultControllerHost = config.getDefaultControllerHost();
-        }
-        if (defaultControllerPort != -1) {
-            this.defaultControllerPort = defaultControllerPort;
-        } else {
-            this.defaultControllerPort = config.getDefaultControllerPort();
-        }
-
-        this.defaultControllerProtocol = config.getDefaultControllerProtocol();
-        */
 
         resolveParameterValues = config.isResolveParameterValues();
         silent = config.isSilent();
@@ -347,26 +285,11 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
             public int readConsoleOutput(ConsoleOutput output) throws IOException {
                 if (output.getBuffer() == null) {
                     terminateSession();
-                } else {
+                }
+                else {
                     if(cliConnection.getState() == ConsoleLoginState.CONNECTED ||
                             cliConnection.getState() == ConsoleLoginState.DISCONNECTED) {
                         handleSafe(output.getBuffer().trim());
-                    }
-                    else if(cliConnection.getState() == ConsoleLoginState.USERNAME) {
-                        cliConnection.setUsername( output.getBuffer().trim());
-                        cliConnection.setState( ConsoleLoginState.PASSWORD);
-                    }
-                    else if(cliConnection.getState() == ConsoleLoginState.PASSWORD) {
-                        cliConnection.setPassword( output.getBuffer().trim());
-                        cliConnection.setState(ConsoleLoginState.DISCONNECTED);
-                        try {
-                            connectController();
-                        } catch (CommandLineException e) {
-                            console.print(e.getMessage());
-                            console.printNewLine();
-                            log.error("Failed to connect: ",e);
-                        }
-                        //try to connect, based on return. set proper state
                     }
                     console.setPrompt(getPrompt());
                 }
@@ -640,10 +563,6 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         printLine(message);
     }
 
-    public void setConsoleLoginState(ConsoleLoginState state) {
-        loginState = state;
-    }
-
     @Override
     public void printColumns(Collection<String> col) {
         if(log.isInfoEnabled()) {
@@ -723,21 +642,18 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         if (host != null) {
             cliConnection.setHost(host);
         }
-
         if (port > 0) {
             cliConnection.setPort(port);
         }
-
         if(protocol != null) {
             cliConnection.setProtocol(protocol);
         }
 
-        /*
-        CliConnection cliConnection = new ConsoleConnection(null, null, host, protocol, port, connectionTimeout,
-                this, null, trustManager, sslContext);
-                */
-        //console.setCallback( new ConsoleLoginCallback(console, cliConnection));
-        new ConsoleLoginCallback(console, cliConnection);
+        //not sure if this is smart...
+        ConsoleLoginCallback loginCallback = new ConsoleLoginCallback(console, cliConnection);
+        console.setCallback(loginCallback);
+        Thread thread = new Thread(loginCallback);
+        thread.start();
     }
 
     @Override
@@ -760,6 +676,8 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
             List<String> nodeTypes = Util.getNodeTypes(newClient, new DefaultOperationRequestAddress());
             domainMode = nodeTypes.contains(Util.SERVER_GROUP);
         }
+
+        console.setPrompt(getPrompt());
         //make sure the default callback is used
         if(console != null)
             console.setCallback(defaultConsoleCallback);

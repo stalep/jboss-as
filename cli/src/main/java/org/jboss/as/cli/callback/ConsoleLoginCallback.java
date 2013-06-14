@@ -33,36 +33,48 @@ import org.jboss.as.cli.operation.impl.DefaultOperationRequestBuilder;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.as.protocol.StreamUtils;
 import org.jboss.logging.Logger;
+import org.jboss.sasl.callback.DigestHashCallback;
 import org.jboss.sasl.util.HexConverter;
 
 import java.security.MessageDigest;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import javax.net.ssl.SSLException;
+import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.NameCallback;
+import javax.security.auth.callback.PasswordCallback;
+import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.sasl.RealmCallback;
+import javax.security.sasl.RealmChoiceCallback;
 import javax.security.sasl.SaslException;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * @author <a href="mailto:stale.pedersen@jboss.org">Ståle W. Pedersen</a>
  */
-public class ConsoleLoginCallback implements ConsoleCallback {
+public class ConsoleLoginCallback implements ConsoleCallback, CallbackHandler, Runnable {
 
     private static final String[] FINGERPRINT_ALGORITHMS = new String[] { "MD5", "SHA1" };
 
     private static final Logger log = Logger.getLogger(ConsoleLoginCallback.class);
     private Console console;
     private CliConnection cliConnection;
+    private CountDownLatch latch;
 
 
     public ConsoleLoginCallback(Console console, CliConnection cliConnection) {
         this.console = console;
         this.cliConnection = cliConnection;
+    }
 
+    @Override
+    public void run() {
         setup();
     }
 
@@ -84,6 +96,28 @@ public class ConsoleLoginCallback implements ConsoleCallback {
                             connect();
                         }
                 }
+            }
+        }
+        else if(cliConnection.getState() == ConsoleLoginState.USERNAME) {
+            String username = output.getBuffer();
+            if(username != null && username.length() > 0) {
+                cliConnection.setUsername(username);
+                if(latch != null && latch.getCount() > 0)
+                    latch.countDown();
+            }
+            else {
+                printLine("Need to give a username!");
+            }
+        }
+        else if(cliConnection.getState() == ConsoleLoginState.PASSWORD) {
+            String password = output.getBuffer();
+            if(password != null && password.length() > 0) {
+                cliConnection.setPassword(password);
+                if(latch != null && latch.getCount() > 0)
+                    latch.countDown();
+            }
+            else {
+                printLine("Need to give a password!");
             }
         }
         return 0;
@@ -108,13 +142,13 @@ public class ConsoleLoginCallback implements ConsoleCallback {
     }
 
     private void connect() throws IOException {
-        CallbackHandler cbh = new AuthenticationCallbackHandler(cliConnection.getUsername(), cliConnection.getPassword());
+        //CallbackHandler cbh = new AuthenticationCallbackHandler(cliConnection.getUsername(), cliConnection.getPassword());
         if(log.isDebugEnabled()) {
             log.debug("connecting to " +  + ':' + cliConnection.getHost() + " as " + cliConnection.getUsername());
         }
         ModelControllerClient modelClient = ModelControllerClientFactory.CUSTOM.
                 getClient(cliConnection.getProtocol(), cliConnection.getHost(), cliConnection.getPort(),
-                        cbh, cliConnection.getSslContext(), cliConnection.getConnectionTimeout(),
+                        (CallbackHandler) this, cliConnection.getSslContext(), cliConnection.getConnectionTimeout(),
                         (ModelControllerClientFactory.ConnectionCloseHandler) cliConnection.getCommandContext());
 
         try {
@@ -128,14 +162,17 @@ public class ConsoleLoginCallback implements ConsoleCallback {
 
             }
             else if(cliConnection.getState() == ConsoleLoginState.DISCONNECTED) {
+                cliConnection.getCommandContext().bindClient(null, cliConnection.getHost(),
+                        cliConnection.getPort());
                 //call disconnect or just start with username again
                 disconnect();
             }
             //the other states will be caught by user input
         }
         catch (CommandLineException e) {
-            console.print(e.getMessage());
-            console.printNewLine();
+            cliConnection.setState(ConsoleLoginState.DISCONNECTED);
+            printLine(e.getMessage());
+            cliConnection.getCommandContext().bindClient(null, cliConnection.getHost(), cliConnection.getPort());
         }
 
     }
@@ -160,16 +197,8 @@ public class ConsoleLoginCallback implements ConsoleCallback {
                 Throwable current = e;
                 while(current != null) {
                     if (current instanceof SaslException) {
-                        //if either are null, we'll ask for username/password
-                        if(cliConnection.isUsernameOrPasswordNull())
-                            throw new IOException(current);
-                        else {
-                            //console.setPrompt("[DISconnected /] ");
-                            cliConnection.setUsername(null);
-                            cliConnection.setPassword(null);
-                            throw new CommandLineException("\nUnable to authenticate against controller at " +
+                           throw new CommandLineException("\nUnable to authenticate against controller at " +
                                     cliConnection.getHost()+ ":" + cliConnection.getPort(), current);
-                        }
                     }
                     if (current instanceof SSLException) {
                         handleSSLFailure();
@@ -258,5 +287,63 @@ public class ConsoleLoginCallback implements ConsoleCallback {
         }
 
         return sb.toString();
+    }
+
+    @Override
+    public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+
+        String digest = null;
+             // Special case for anonymous authentication to avoid prompting user for their name.
+        if (callbacks.length == 1 && callbacks[0] instanceof NameCallback) {
+            ((NameCallback) callbacks[0]).setName("anonymous CLI user");
+            return;
+        }
+
+        for (Callback current : callbacks) {
+            if (current instanceof RealmCallback) {
+                RealmCallback rcb = (RealmCallback) current;
+                String defaultText = rcb.getDefaultText();
+                rcb.setText(defaultText); // For now just use the realm suggested.
+            } else if (current instanceof RealmChoiceCallback) {
+                throw new UnsupportedCallbackException(current, "Realm choice not currently supported.");
+            } else if (current instanceof NameCallback) {
+                NameCallback ncb = (NameCallback) current;
+                latch = new CountDownLatch(1);
+                console.setCallback(this);
+                cliConnection.setState(ConsoleLoginState.USERNAME);
+                console.setPrompt("Username: ");
+                try {
+                    latch.await();
+                    ncb.setName(cliConnection.getUsername());
+                }
+                catch (InterruptedException e) {
+                    ncb.setName(cliConnection.getUsername());
+                }
+            }
+            else if (current instanceof PasswordCallback && digest == null) {
+                // If a digest had been set support for PasswordCallback is disabled.
+                PasswordCallback pcb = (PasswordCallback) current;
+                latch = new CountDownLatch(1);
+                console.setCallback(this);
+                cliConnection.setState(ConsoleLoginState.PASSWORD);
+                console.setPrompt("Password: ");
+                try {
+                    latch.await();
+                    pcb.setPassword(cliConnection.getPassword().toCharArray());
+                }
+                catch (InterruptedException e) {
+                    pcb.setPassword(cliConnection.getPassword().toCharArray());
+                }
+            }
+            else if (current instanceof DigestHashCallback && digest != null) {
+                // We don't support an interactive use of this callback so it must have been set in advance.
+                DigestHashCallback dhc = (DigestHashCallback) current;
+                dhc.setHexHash(digest);
+            }
+            else {
+                //error("Unexpected Callback " + current.getClass().getName());
+                throw new UnsupportedCallbackException(current);
+            }
+        }
     }
 }
