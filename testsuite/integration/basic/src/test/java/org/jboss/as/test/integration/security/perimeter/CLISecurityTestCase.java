@@ -48,7 +48,6 @@ import static org.junit.Assert.assertTrue;
  */
 @RunWith(Arquillian.class)
 @RunAsClient
-@Ignore
 public class CLISecurityTestCase {
 
     Logger logger = Logger.getLogger(CLISecurityTestCase.class);

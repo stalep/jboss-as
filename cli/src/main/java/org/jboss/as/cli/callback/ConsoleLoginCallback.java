@@ -63,6 +63,7 @@ public class ConsoleLoginCallback implements ConsoleCallback, CallbackHandler, R
     private static final String[] FINGERPRINT_ALGORITHMS = new String[] { "MD5", "SHA1" };
 
     private static final Logger log = Logger.getLogger(ConsoleLoginCallback.class);
+    private String realm;
     private Console console;
     private CliConnection cliConnection;
     private CountDownLatch latch;
@@ -303,6 +304,7 @@ public class ConsoleLoginCallback implements ConsoleCallback, CallbackHandler, R
             if (current instanceof RealmCallback) {
                 RealmCallback rcb = (RealmCallback) current;
                 String defaultText = rcb.getDefaultText();
+                realm = defaultText;
                 rcb.setText(defaultText); // For now just use the realm suggested.
             } else if (current instanceof RealmChoiceCallback) {
                 throw new UnsupportedCallbackException(current, "Realm choice not currently supported.");
@@ -311,6 +313,7 @@ public class ConsoleLoginCallback implements ConsoleCallback, CallbackHandler, R
                 latch = new CountDownLatch(1);
                 console.setCallback(this);
                 cliConnection.setState(ConsoleLoginState.USERNAME);
+                printLine("Authenticating against security realm: " + realm);
                 console.setPrompt("Username: ");
                 try {
                     latch.await();
