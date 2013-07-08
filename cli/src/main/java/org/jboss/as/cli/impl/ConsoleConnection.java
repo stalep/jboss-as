@@ -21,6 +21,7 @@
  */
 package org.jboss.as.cli.impl;
 
+import org.jboss.aesh.console.ConsoleCallback;
 import org.jboss.as.cli.CliConnection;
 import org.jboss.as.cli.CliInitializationException;
 import org.jboss.as.cli.CommandContext;
@@ -39,6 +40,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author <a href="mailto:stale.pedersen@jboss.org">Ståle W. Pedersen</a>
@@ -65,6 +68,11 @@ public class ConsoleConnection implements CliConnection {
     /** The TrustManager in use by the SSLContext, a reference is kept to rejected certificates can be captured. */
     private LazyDelagatingTrustManager trustManager;
     private CommandContext commandContext;
+
+
+    private ConsoleCallback defaultConsoleCallback;
+
+    private CountDownLatch connectionLatch;
 
     public ConsoleConnection(String host, int port) {
         setHost(host);
@@ -224,6 +232,34 @@ public class ConsoleConnection implements CliConnection {
     @Override
     public void setCommandContext(CommandContext commandContext) {
         this.commandContext = commandContext;
+    }
+
+    //@Override
+    public ConsoleCallback getDefaultConsoleCallback() {
+        return defaultConsoleCallback;
+    }
+
+    //@Override
+    public void setDefaultConsoleCallback(ConsoleCallback defaultConsoleCallback) {
+        this.defaultConsoleCallback = defaultConsoleCallback;
+    }
+
+    @Override
+    public void initConnectionLatch() {
+        if(connectionLatch == null || connectionLatch.getCount() < 1) {
+            connectionLatch = new CountDownLatch(1);
+            try {
+                connectionLatch.await(3, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public void endConnectionLatch() {
+        if(connectionLatch != null)
+            connectionLatch.countDown();
     }
 
        /**

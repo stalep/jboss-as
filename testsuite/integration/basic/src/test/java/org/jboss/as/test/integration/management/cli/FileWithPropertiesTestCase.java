@@ -257,8 +257,11 @@ public class FileWithPropertiesTestCase {
         Process cliProc = null;
         try {
             cliProc = builder.start();
+            Thread.sleep(250);
         } catch (IOException e) {
             fail("Failed to start CLI process: " + e.getLocalizedMessage());
+        } catch (InterruptedException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
 
         final InputStream cliStream = cliProc.getInputStream();

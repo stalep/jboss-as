@@ -78,7 +78,7 @@ public interface Console {
 
     boolean isRunning();
 
-    void setPrompt(String prompt);
+    void setPrompt(Prompt prompt);
 
     void setCallback(ConsoleCallback consoleCallback);
 
@@ -206,9 +206,9 @@ public interface Console {
                 }
 
                 @Override
-                public void setPrompt(String prompt) {
+                public void setPrompt(Prompt prompt) {
                     try {
-                        console.setPrompt(new Prompt(prompt));
+                        console.setPrompt(prompt);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

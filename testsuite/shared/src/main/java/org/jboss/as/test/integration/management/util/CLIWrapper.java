@@ -116,6 +116,11 @@ public class CLIWrapper {
             String addr = cliAddress != null ? cliAddress : TestSuiteEnvironment.getServerAddress();
             try {
                 ctx.connectController("http-remoting", addr, TestSuiteEnvironment.getServerPort());
+                try {
+                    Thread.sleep(250);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 return true;
             } catch (CommandLineException e) {
                 e.printStackTrace();

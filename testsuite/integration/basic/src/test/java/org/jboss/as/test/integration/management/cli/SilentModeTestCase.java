@@ -88,7 +88,6 @@ public class SilentModeTestCase {
     @Test
     public void testLogging() throws Exception {
         setupCliLogging();
-        cliOut.reset();
 
         final CommandContext ctx = CLITestUtil.getCommandContext(cliOut);
 
@@ -96,7 +95,10 @@ public class SilentModeTestCase {
             ctx.setCurrentDir(new File("."));
             ctx.setSilent(true);
             ctx.connectController();
+            cliOut.reset();
             ctx.handleSafe(":read-resource");
+            String cliOutput = cliOut.toString();
+            System.out.println("CLIOUT: "+cliOutput);
             assertTrue(cliOut.toString().isEmpty());
             assertFalse(checkIfEmpty(new File(CLI_LOG_FILE)));
         } finally {
@@ -116,6 +118,7 @@ public class SilentModeTestCase {
         try {
             ctx.setCurrentDir(new File("."));
             ctx.setSilent(true);
+            cliOut.reset();
             ctx.handleSafe("help > " + target.getAbsolutePath());
             assertTrue(cliOut.toString().isEmpty());
             assertFalse(checkIfEmpty(target));

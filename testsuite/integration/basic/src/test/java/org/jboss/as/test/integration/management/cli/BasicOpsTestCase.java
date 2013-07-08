@@ -45,6 +45,7 @@ public class BasicOpsTestCase {
 
         assertFalse(cli.isConnected());
         cli.sendLine("connect " + TestSuiteEnvironment.getServerAddress() + ":" + TestSuiteEnvironment.getServerPort());
+        Thread.sleep(250);
         assertTrue(cli.isConnected());
 
         cli.quit();

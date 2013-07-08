@@ -23,6 +23,7 @@ package org.jboss.as.cli.callback;
 
 import org.jboss.aesh.console.ConsoleCallback;
 import org.jboss.aesh.console.ConsoleOutput;
+import org.jboss.aesh.console.Prompt;
 import org.jboss.as.cli.CliConnection;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.Util;
@@ -116,6 +117,9 @@ public class ConsoleLoginCallback implements ConsoleCallback, CallbackHandler, R
                 cliConnection.setPassword(password);
                 if(latch != null && latch.getCount() > 0)
                     latch.countDown();
+
+                //setting and empty prompt and waitng for the connection result
+                console.setPrompt(new Prompt(""));
             }
             else {
                 printLine("Need to give a password!");
@@ -139,7 +143,8 @@ public class ConsoleLoginCallback implements ConsoleCallback, CallbackHandler, R
 
     //cleanup and go back to initial status
     private void disconnect() {
-       cliConnection.getCommandContext().bindClient(null);
+        cliConnection.endConnectionLatch();
+        cliConnection.getCommandContext().bindClient(null);
     }
 
     private void connect() throws IOException {
@@ -157,12 +162,14 @@ public class ConsoleLoginCallback implements ConsoleCallback, CallbackHandler, R
             if(cliConnection.getState() == ConsoleLoginState.CONNECTED) {
                 //call commandContext and confirm that we have connection
                 cliConnection.setModelClient(modelClient);
+                cliConnection.endConnectionLatch();
                 cliConnection.getCommandContext().bindClient(modelClient, cliConnection.getHost(),
                         cliConnection.getPort());
                 //commandContext.bindClient(modelClient, defaultHost, defaultPort);
 
             }
             else if(cliConnection.getState() == ConsoleLoginState.DISCONNECTED) {
+                cliConnection.endConnectionLatch();
                 cliConnection.getCommandContext().bindClient(null, cliConnection.getHost(),
                         cliConnection.getPort());
                 //call disconnect or just start with username again
@@ -172,6 +179,7 @@ public class ConsoleLoginCallback implements ConsoleCallback, CallbackHandler, R
         }
         catch (CommandLineException e) {
             cliConnection.setState(ConsoleLoginState.DISCONNECTED);
+            cliConnection.endConnectionLatch();
             printLine(e.getMessage());
             cliConnection.getCommandContext().bindClient(null, cliConnection.getHost(), cliConnection.getPort());
         }
@@ -198,7 +206,7 @@ public class ConsoleLoginCallback implements ConsoleCallback, CallbackHandler, R
                 Throwable current = e;
                 while(current != null) {
                     if (current instanceof SaslException) {
-                           throw new CommandLineException("\nUnable to authenticate against controller at " +
+                           throw new CommandLineException("Unable to authenticate against controller at " +
                                     cliConnection.getHost()+ ":" + cliConnection.getPort(), current);
                     }
                     if (current instanceof SSLException) {
@@ -314,7 +322,8 @@ public class ConsoleLoginCallback implements ConsoleCallback, CallbackHandler, R
                 console.setCallback(this);
                 cliConnection.setState(ConsoleLoginState.USERNAME);
                 printLine("Authenticating against security realm: " + realm);
-                console.setPrompt("Username: ");
+                console.setPrompt(new Prompt("Username: "));
+                cliConnection.endConnectionLatch();
                 try {
                     latch.await();
                     ncb.setName(cliConnection.getUsername());
@@ -329,7 +338,7 @@ public class ConsoleLoginCallback implements ConsoleCallback, CallbackHandler, R
                 latch = new CountDownLatch(1);
                 console.setCallback(this);
                 cliConnection.setState(ConsoleLoginState.PASSWORD);
-                console.setPrompt("Password: ");
+                console.setPrompt(new Prompt("Password: ", (char) 0));
                 try {
                     latch.await();
                     pcb.setPassword(cliConnection.getPassword().toCharArray());

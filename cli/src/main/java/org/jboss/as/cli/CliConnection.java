@@ -79,4 +79,8 @@ public interface CliConnection {
     CommandContext getCommandContext();
 
     void setCommandContext(CommandContext commandContext);
+
+    void initConnectionLatch();
+
+    void endConnectionLatch();
 }

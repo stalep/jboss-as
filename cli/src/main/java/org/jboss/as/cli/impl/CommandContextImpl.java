@@ -35,6 +35,7 @@ import java.util.Map;
 
 import org.jboss.aesh.console.ConsoleCallback;
 import org.jboss.aesh.console.ConsoleOutput;
+import org.jboss.aesh.console.Prompt;
 import org.jboss.as.cli.CliConfig;
 import org.jboss.as.cli.CliConnection;
 import org.jboss.as.cli.CliEvent;
@@ -276,7 +277,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         else if(cmdCompleter == null) {
             throw new IllegalStateException("The console hasn't been initialized at construction time.");
         }
-        else if (client == null) {
+        else if (client == null && !silent) {
             printLine("You are disconnected at the moment. Type 'connect' to connect to the server or"
                     + " 'help' for the list of supported commands.");
         }
@@ -291,14 +292,14 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                             cliConnection.getState() == ConsoleLoginState.DISCONNECTED) {
                         handleSafe(output.getBuffer().trim());
                     }
-                    console.setPrompt(getPrompt());
+                    console.setPrompt(new Prompt(getPrompt()));
                 }
                 return 0;
             }
         };
         this.console = Console.Factory.getConsole(this, defaultConsoleCallback);
         this.console.start();
-        console.setPrompt(getPrompt());
+        console.setPrompt(new Prompt(getPrompt()));
     }
 
     private void copyConfigSettingsToConsole(InputStream consoleInput, OutputStream consoleOutput) {
@@ -651,9 +652,11 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
 
         //not sure if this is smart...
         ConsoleLoginCallback loginCallback = new ConsoleLoginCallback(console, cliConnection);
-        console.setCallback(loginCallback);
+        if(console != null)
+            console.setCallback(loginCallback);
         Thread thread = new Thread(loginCallback);
         thread.start();
+        cliConnection.initConnectionLatch();
     }
 
     @Override
@@ -663,6 +666,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
 
     @Override
     public void bindClient(ModelControllerClient newClient, String host, int port) {
+        cliConnection.endConnectionLatch();
         if (newClient != null) {
             if (this.client != null) {
                 disconnectController();
@@ -677,10 +681,11 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
             domainMode = nodeTypes.contains(Util.SERVER_GROUP);
         }
 
-        console.setPrompt(getPrompt());
-        //make sure the default callback is used
-        if(console != null)
+        if(console != null) {
+            console.setPrompt(new Prompt(getPrompt()));
+            //make sure the default callback is used
             console.setCallback(defaultConsoleCallback);
+        }
     }
 
     @Override
