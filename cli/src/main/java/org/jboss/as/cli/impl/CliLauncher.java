@@ -36,7 +36,7 @@ import org.jboss.as.cli.CommandContextFactory;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.aesh.AeshCliConsole;
-import org.jboss.as.cli.aesh.CliConnectionContextImpl;
+import org.jboss.as.cli.aesh.ConnectionContextImpl;
 import org.jboss.as.cli.gui.GuiMain;
 import org.jboss.as.cli.handlers.VersionHandler;
 import org.jboss.as.protocol.StreamUtils;

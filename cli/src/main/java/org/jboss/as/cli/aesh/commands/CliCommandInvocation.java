@@ -12,7 +12,7 @@ import org.jboss.aesh.console.command.invocation.CommandInvocation;
 import org.jboss.aesh.console.command.registry.CommandRegistry;
 import org.jboss.aesh.console.operator.ControlOperator;
 import org.jboss.aesh.terminal.Shell;
-import org.jboss.as.cli.aesh.CliConnectionContext;
+import org.jboss.as.cli.aesh.ConnectionContext;
 
 /**
  * @author <a href="mailto:stale.pedersen@jboss.org">Ståle W. Pedersen</a>
@@ -20,14 +20,14 @@ import org.jboss.as.cli.aesh.CliConnectionContext;
 public class CliCommandInvocation implements CommandInvocation {
 
     private final CommandInvocation commandInvocation;
-    private final CliConnectionContext ctx;
+    private final ConnectionContext ctx;
 
-    public CliCommandInvocation(final CliConnectionContext ctx, CommandInvocation commandInvocation) {
+    public CliCommandInvocation(final ConnectionContext ctx, CommandInvocation commandInvocation) {
         this.ctx = ctx;
         this.commandInvocation = commandInvocation;
     }
 
-    public final CliConnectionContext getConnectionContext() {
+    public final ConnectionContext getConnectionContext() {
         return ctx;
     }
 

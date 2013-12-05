@@ -17,7 +17,7 @@ import org.jboss.aesh.terminal.Shell;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.ControllerAddress;
 import org.jboss.as.cli.Util;
-import org.jboss.as.cli.aesh.CliConnectionContext;
+import org.jboss.as.cli.aesh.ConnectionContext;
 import org.jboss.as.cli.impl.ModelControllerClientFactory;
 import org.jboss.as.cli.operation.impl.DefaultOperationRequestBuilder;
 import org.jboss.as.controller.client.ModelControllerClient;
@@ -62,7 +62,7 @@ public class ConnectionCommand implements Command<CliCommandInvocation>, Console
     private Shell shell;
     private ConnectionStatus status = START;
     private Certificate[] lastChain;
-    private CliConnectionContext ctx;
+    private ConnectionContext ctx;
     private String realm = null;
     private boolean realmShown = false;
     private CountDownLatch latch;
@@ -161,7 +161,7 @@ public class ConnectionCommand implements Command<CliCommandInvocation>, Console
     /**
      * Handle the last SSL failure, prompting the user to accept or reject the certificate of the remote server.
      */
-    private void handleSSLFailure(CliConnectionContext ctx) throws CommandLineException {
+    private void handleSSLFailure(ConnectionContext ctx) throws CommandLineException {
 
         if (ctx.getSSLContext().getTrustManager() == null || (lastChain = ctx.getSSLContext().getTrustManager().getLastFailedCertificateChain()) == null) {
             return;

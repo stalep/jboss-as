@@ -15,9 +15,9 @@ import org.jboss.as.cli.aesh.commands.CliCommandInvocation;
  */
 public class CliCommandInvocationProvider implements CommandInvocationProvider<CliCommandInvocation> {
 
-    private final CliConnectionContext connectionContext;
+    private final ConnectionContext connectionContext;
 
-    public CliCommandInvocationProvider(final CliConnectionContext connectionContext) {
+    public CliCommandInvocationProvider(final ConnectionContext connectionContext) {
         this.connectionContext = connectionContext;
     }
     @Override

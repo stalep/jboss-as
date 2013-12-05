@@ -19,9 +19,9 @@ public class CliCompleterInvocation implements CompleterInvocation {
 
     private CompleterInvocation delegate;
 
-    private CliConnectionContext connectionContext;
+    private ConnectionContext connectionContext;
 
-    public CliCompleterInvocation(CompleterInvocation delegate, CliConnectionContext ctx) {
+    public CliCompleterInvocation(CompleterInvocation delegate, ConnectionContext ctx) {
         this.delegate = delegate;
         this.connectionContext = ctx;
     }
@@ -81,7 +81,7 @@ public class CliCompleterInvocation implements CompleterInvocation {
         delegate.setAppendSpace(b);
     }
 
-    public CliConnectionContext getConnectionContext() {
+    public ConnectionContext getConnectionContext() {
         return connectionContext;
     }
 }

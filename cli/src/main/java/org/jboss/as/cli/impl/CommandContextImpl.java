@@ -82,6 +82,7 @@ import org.jboss.as.cli.ControllerAddress;
 import org.jboss.as.cli.OperationCommand;
 import org.jboss.as.cli.SSLConfig;
 import org.jboss.as.cli.Util;
+import org.jboss.as.cli.aesh.connection.CliSSLContext;
 import org.jboss.as.cli.batch.Batch;
 import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.batch.BatchedCommand;
@@ -821,6 +822,11 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     }
 
     @Override
+    public void bindClient(ModelControllerClient newClient, ControllerAddress address) {
+        initNewClient(newClient, address);
+    }
+
+    @Override
     public void bindClient(ModelControllerClient newClient) {
         initNewClient(newClient, null);
     }
@@ -1251,6 +1257,26 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     @Override
     public void setSilent(boolean silent) {
         this.silent = silent;
+    }
+
+    @Override
+    public ControllerAddressResolver getAddressResolver() {
+        return addressResolver;
+    }
+
+    @Override
+    public CliSSLContext getSSLContext() {
+        return null;
+    }
+
+    @Override
+    public boolean doDisableLocalAuth() {
+        return disableLocalAuth;
+    }
+
+    @Override
+    public int getConnectionTimeout() {
+        return connectionTimeout;
     }
 
     @Override

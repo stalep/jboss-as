@@ -25,7 +25,7 @@ import java.io.File;
 /**
  * @author <a href="mailto:stale.pedersen@jboss.org">Ståle W. Pedersen</a>
  */
-public interface CliConnectionContext extends ModelControllerClientFactory.ConnectionCloseHandler {
+public interface ConnectionContext extends ModelControllerClientFactory.ConnectionCloseHandler {
     /**
      * Returns the JBoss CLI configuration.
      * @return  CLI configuration

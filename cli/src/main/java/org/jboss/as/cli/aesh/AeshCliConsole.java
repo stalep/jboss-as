@@ -26,11 +26,11 @@ import java.io.PrintStream;
 public class AeshCliConsole {
 
     private AeshConsole console;
-    private CliConnectionContext connectionContext;
+    private ConnectionContext connectionContext;
     private CommandRegistry commandRegistry;
     private static final String PROVIDER = "JBOSS_CLI";
 
-    public AeshCliConsole(CliConnectionContext connectionContext) {
+    public AeshCliConsole(ConnectionContext connectionContext) {
         this.connectionContext = connectionContext;
 
         setupConsole(null, null);
@@ -41,7 +41,7 @@ public class AeshCliConsole {
             console.start();
     }
 
-    public AeshCliConsole(CliConnectionContext connectionContext,
+    public AeshCliConsole(ConnectionContext connectionContext,
                           InputStream consoleInput, OutputStream consoleOutput) {
         this.connectionContext = connectionContext;
 

@@ -37,11 +37,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * CliConnectionContext keep the connection context
+ * ConnectionContext keep the connection context
  *
  * @author <a href="mailto:stale.pedersen@jboss.org">Ståle W. Pedersen</a>
  */
-public class CliConnectionContextImpl implements CliConnectionContext {
+public class ConnectionContextImpl implements ConnectionContext {
 
     /** the cli configuration */
     private final CliConfig config;
@@ -92,9 +92,9 @@ public class CliConnectionContextImpl implements CliConnectionContext {
     /** whether to write messages to the terminal output */
     private boolean silent;
 
-    private static final Logger log = Logger.getLogger(CliConnectionContextImpl.class);
+    private static final Logger log = Logger.getLogger(ConnectionContextImpl.class);
 
-    public CliConnectionContextImpl() throws CliInitializationException {
+    public ConnectionContextImpl() throws CliInitializationException {
         this.config = CliConfigImpl.load(null);
         addressResolver = ControllerAddressResolver.newInstance(config, null);
         username = null;
@@ -105,12 +105,12 @@ public class CliConnectionContextImpl implements CliConnectionContext {
         this.connectionTimeout = config.getConnectionTimeout();
     }
 
-    public CliConnectionContextImpl(String username, String password, boolean disableLocalAuth) throws CliInitializationException {
+    public ConnectionContextImpl(String username, String password, boolean disableLocalAuth) throws CliInitializationException {
         this(null, username, password, disableLocalAuth, false, -1);
     }
 
-    public CliConnectionContextImpl(String defaultController, String username, String password, boolean disableLocalAuth,
-                                    boolean initConsole, final int connectionTimeout) throws CliInitializationException {
+    public ConnectionContextImpl(String defaultController, String username, String password, boolean disableLocalAuth,
+                                 boolean initConsole, final int connectionTimeout) throws CliInitializationException {
 
         config = CliConfigImpl.load(null);
         addressResolver = ControllerAddressResolver.newInstance(config, defaultController);
