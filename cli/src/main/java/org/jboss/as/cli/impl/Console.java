@@ -22,23 +22,10 @@
 package org.jboss.as.cli.impl;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Collection;
-import java.util.List;
 
-import org.jboss.aesh.console.ConsoleOutput;
-import org.jboss.as.cli.CliInitializationException;
-import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandHistory;
 import org.jboss.as.cli.CommandLineCompleter;
-
-import org.jboss.aesh.complete.CompleteOperation;
-import org.jboss.aesh.complete.Completion;
-import org.jboss.aesh.console.Config;
-import org.jboss.aesh.console.Prompt;
-import org.jboss.aesh.console.settings.Settings;
 
 /**
  *
@@ -72,6 +59,7 @@ public interface Console {
 
     int getTerminalHeight();
 
+    /*
     static final class Factory {
 
         public static Console getConsole(CommandContext ctx) throws CliInitializationException {
@@ -238,4 +226,5 @@ public interface Console {
             }};
         }
     }
+    */
 }

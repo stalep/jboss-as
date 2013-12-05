@@ -35,6 +35,8 @@ import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandContextFactory;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.Util;
+import org.jboss.as.cli.aesh.AeshCliConsole;
+import org.jboss.as.cli.aesh.CliConnectionContextImpl;
 import org.jboss.as.cli.gui.GuiMain;
 import org.jboss.as.cli.handlers.VersionHandler;
 import org.jboss.as.protocol.StreamUtils;
@@ -227,8 +229,14 @@ public class CliLauncher {
 
             // Interactive mode
             cmdCtx = initCommandContext(defaultController, username, password, noLocalAuth, true, connect, connectionTimeout);
-            runcom(cmdCtx);
-            cmdCtx.interact();
+            //runcom(cmdCtx);
+            //cmdCtx.interact();
+            AeshCliConsole cliConsole = new AeshCliConsole(cmdCtx);
+                    //new CliConnectionContextImpl(defaultController,  username, passwd, noLocalAuth, true, connectionTimeout));
+            cliConsole.startConsole();
+
+            //cmdCtx = initCommandContext(defaultController, username, password, noLocalAuth, true, connect, connectionTimeout);
+            //cmdCtx.interact();
         } catch(Throwable t) {
             t.printStackTrace();
             exitCode = 1;
@@ -236,11 +244,11 @@ public class CliLauncher {
             if(cmdCtx != null && cmdCtx.getExitCode() != 0) {
                 exitCode = cmdCtx.getExitCode();
             }
-            if (!gui) {
-                System.exit(exitCode);
-            }
+            //if (!gui) {
+            //    System.exit(exitCode);
+            //}
         }
-        System.exit(exitCode);
+        //System.exit(exitCode);
     }
 
     private static CommandContext initCommandContext(String defaultController, String username, char[] password, boolean disableLocalAuth, boolean initConsole, boolean connect, final int connectionTimeout) throws CliInitializationException {

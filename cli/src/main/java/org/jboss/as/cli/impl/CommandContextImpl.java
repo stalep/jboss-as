@@ -151,7 +151,6 @@ import org.jboss.as.cli.parsing.operation.OperationFormat;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.as.protocol.StreamUtils;
 import org.jboss.dmr.ModelNode;
-import org.jboss.aesh.console.settings.Settings;
 import org.jboss.logging.Logger;
 import org.jboss.logging.Logger.Level;
 import org.jboss.sasl.callback.DigestHashCallback;
@@ -323,10 +322,11 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
 
     protected void initBasicConsole(InputStream consoleInput, OutputStream consoleOutput) throws CliInitializationException {
         copyConfigSettingsToConsole(consoleInput, consoleOutput);
-        this.console = Console.Factory.getConsole(this);
+        //this.console = Console.Factory.getConsole(this);
     }
 
     private void copyConfigSettingsToConsole(InputStream consoleInput, OutputStream consoleOutput) {
+        /*
         if(consoleInput != null)
             Settings.getInstance().setInputStream(consoleInput);
         if(consoleOutput != null)
@@ -336,6 +336,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         Settings.getInstance().setHistoryFile(new File(config.getHistoryFileDir(), config.getHistoryFileName()));
         Settings.getInstance().setHistorySize(config.getHistoryMaxSize());
         Settings.getInstance().setEnablePipelineAndRedirectionParser(false);
+        */
     }
 
     private void initCommands() {
