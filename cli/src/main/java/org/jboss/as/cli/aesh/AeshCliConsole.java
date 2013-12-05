@@ -13,8 +13,8 @@ import org.jboss.aesh.console.command.invocation.CommandInvocationServices;
 import org.jboss.aesh.console.command.registry.AeshCommandRegistryBuilder;
 import org.jboss.aesh.console.command.registry.CommandRegistry;
 import org.jboss.aesh.console.settings.SettingsBuilder;
-import org.jboss.as.cli.aesh.handlers.LsCommand;
-import org.jboss.as.cli.aesh.handlers.QuitCommand;
+import org.jboss.as.cli.aesh.commands.LsCommand;
+import org.jboss.as.cli.aesh.commands.QuitCommand;
 
 import java.io.InputStream;
 import java.io.OutputStream;

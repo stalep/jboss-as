@@ -8,7 +8,7 @@ package org.jboss.as.cli.aesh;
 
 import org.jboss.aesh.console.command.invocation.CommandInvocation;
 import org.jboss.aesh.console.command.invocation.CommandInvocationProvider;
-import org.jboss.as.cli.aesh.handlers.CliCommandInvocation;
+import org.jboss.as.cli.aesh.commands.CliCommandInvocation;
 
 /**
  * @author <a href="mailto:stale.pedersen@jboss.org">Ståle W. Pedersen</a>

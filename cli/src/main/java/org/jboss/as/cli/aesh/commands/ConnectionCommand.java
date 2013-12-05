@@ -4,7 +4,7 @@
  * Licensed under the Eclipse Public License version 1.0, available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.jboss.as.cli.aesh.handlers;
+package org.jboss.as.cli.aesh.commands;
 
 import org.jboss.aesh.cl.Arguments;
 import org.jboss.aesh.cl.CommandDefinition;
@@ -45,7 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
-import static org.jboss.as.cli.aesh.handlers.ConnectionCommand.ConnectionStatus.*;
+import static org.jboss.as.cli.aesh.commands.ConnectionCommand.ConnectionStatus.*;
 
 /**
  * @author <a href="mailto:stale.pedersen@jboss.org">Ståle W. Pedersen</a>
@@ -105,6 +105,7 @@ public class ConnectionCommand implements Command<CliCommandInvocation>, Console
             tryConnection(tempClient, address);
             //if no exceptions are thrown we bind it
             ctx.bindClient(tempClient, address);
+            log.info("we're connected...");
         }
         catch (CommandLineException | IOException e) {
             e.printStackTrace();
