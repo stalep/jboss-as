@@ -78,7 +78,7 @@ public class ConnectionCommand implements Command<CliCommandInvocation>, Console
 
     @Override
     public CommandResult execute(final CliCommandInvocation commandInvocation) throws IOException {
-        this.ctx = commandInvocation.getConnectionContext();
+        this.ctx = commandInvocation.getCommandContext();
 
         if(controllers != null && controllers.size() > 0) {
             this.shell = commandInvocation.getShell();
@@ -106,6 +106,8 @@ public class ConnectionCommand implements Command<CliCommandInvocation>, Console
             //if no exceptions are thrown we bind it
             ctx.bindClient(tempClient, address);
             log.info("we're connected...");
+            System.out.println("we're connected");
+            release();
         }
         catch (CommandLineException | IOException e) {
             e.printStackTrace();
@@ -155,6 +157,10 @@ public class ConnectionCommand implements Command<CliCommandInvocation>, Console
         if(latch != null)
             latch.countDown();
         ctx.bindClient(null, null);
+    }
+
+    private void release() {
+        attached = false;
     }
 
 

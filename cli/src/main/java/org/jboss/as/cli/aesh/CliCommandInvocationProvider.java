@@ -8,6 +8,7 @@ package org.jboss.as.cli.aesh;
 
 import org.jboss.aesh.console.command.invocation.CommandInvocation;
 import org.jboss.aesh.console.command.invocation.CommandInvocationProvider;
+import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.aesh.commands.CliCommandInvocation;
 
 /**
@@ -15,13 +16,13 @@ import org.jboss.as.cli.aesh.commands.CliCommandInvocation;
  */
 public class CliCommandInvocationProvider implements CommandInvocationProvider<CliCommandInvocation> {
 
-    private final ConnectionContext connectionContext;
+    private final CommandContext commandContext;
 
-    public CliCommandInvocationProvider(final ConnectionContext connectionContext) {
-        this.connectionContext = connectionContext;
+    public CliCommandInvocationProvider(final CommandContext commandContext) {
+        this.commandContext = commandContext;
     }
     @Override
     public CliCommandInvocation enhanceCommandInvocation(CommandInvocation commandInvocation) {
-        return new CliCommandInvocation(connectionContext, commandInvocation);
+        return new CliCommandInvocation(commandContext, commandInvocation);
     }
 }

@@ -13,6 +13,9 @@ import org.jboss.aesh.console.command.invocation.CommandInvocationServices;
 import org.jboss.aesh.console.command.registry.AeshCommandRegistryBuilder;
 import org.jboss.aesh.console.command.registry.CommandRegistry;
 import org.jboss.aesh.console.settings.SettingsBuilder;
+import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.aesh.commands.ConnectionCommand;
+import org.jboss.as.cli.aesh.commands.ExitCommand;
 import org.jboss.as.cli.aesh.commands.LsCommand;
 import org.jboss.as.cli.aesh.commands.QuitCommand;
 
@@ -26,12 +29,12 @@ import java.io.PrintStream;
 public class AeshCliConsole {
 
     private AeshConsole console;
-    private ConnectionContext connectionContext;
+    private CommandContext commandContext;
     private CommandRegistry commandRegistry;
     private static final String PROVIDER = "JBOSS_CLI";
 
-    public AeshCliConsole(ConnectionContext connectionContext) {
-        this.connectionContext = connectionContext;
+    public AeshCliConsole(CommandContext commandContext) {
+        this.commandContext = commandContext;
 
         setupConsole(null, null);
     }
@@ -41,9 +44,9 @@ public class AeshCliConsole {
             console.start();
     }
 
-    public AeshCliConsole(ConnectionContext connectionContext,
+    public AeshCliConsole(CommandContext commandContext,
                           InputStream consoleInput, OutputStream consoleOutput) {
-        this.connectionContext = connectionContext;
+        this.commandContext = commandContext;
 
         setupConsole(consoleInput, consoleOutput);
     }
@@ -55,9 +58,10 @@ public class AeshCliConsole {
             settingsBuilder.inputStream(consoleInput);
         if(consoleOutput != null)
             settingsBuilder.outputStream(new PrintStream(consoleOutput));
+        settingsBuilder.logging(true);
 
         CommandInvocationServices services = new CommandInvocationServices();
-        services.registerProvider(PROVIDER, new CliCommandInvocationProvider(connectionContext));
+        services.registerProvider(PROVIDER, new CliCommandInvocationProvider(commandContext));
 
 
         commandRegistry = createCommandRegistry();
@@ -66,7 +70,7 @@ public class AeshCliConsole {
                 .commandRegistry(commandRegistry)
                 .settings(settingsBuilder.create())
                 .commandInvocationProvider(services)
-                .completerInvocationProvider(new CliCompleterInvocationProvider(connectionContext))
+                .completerInvocationProvider(new CliCompleterInvocationProvider(commandContext))
                 .prompt(new Prompt("[aesh@test]$ "))
                 .create();
 
@@ -77,7 +81,9 @@ public class AeshCliConsole {
     private CommandRegistry createCommandRegistry() {
         return new AeshCommandRegistryBuilder()
                 .command(QuitCommand.class)
+                .command(ExitCommand.class)
                 .command(LsCommand.class)
+                .command(ConnectionCommand.class)
                 .create();
     }
 }

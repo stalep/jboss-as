@@ -15,8 +15,8 @@ import java.io.IOException;
 /**
  * @author <a href="mailto:stale.pedersen@jboss.org">Ståle W. Pedersen</a>
  */
-@CommandDefinition(name = "quit", description = "quits the session")
-public class QuitCommand implements Command<CliCommandInvocation> {
+@CommandDefinition(name = "exit", description = "exits the session")
+public class ExitCommand implements Command<CliCommandInvocation> {
 
     @Override
     public CommandResult execute(CliCommandInvocation commandInvocation) throws IOException {

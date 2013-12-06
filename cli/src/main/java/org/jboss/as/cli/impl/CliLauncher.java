@@ -36,7 +36,6 @@ import org.jboss.as.cli.CommandContextFactory;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.aesh.AeshCliConsole;
-import org.jboss.as.cli.aesh.ConnectionContextImpl;
 import org.jboss.as.cli.gui.GuiMain;
 import org.jboss.as.cli.handlers.VersionHandler;
 import org.jboss.as.protocol.StreamUtils;
@@ -235,8 +234,6 @@ public class CliLauncher {
                     //new CliConnectionContextImpl(defaultController,  username, passwd, noLocalAuth, true, connectionTimeout));
             cliConsole.startConsole();
 
-            //cmdCtx = initCommandContext(defaultController, username, password, noLocalAuth, true, connect, connectionTimeout);
-            //cmdCtx.interact();
         } catch(Throwable t) {
             t.printStackTrace();
             exitCode = 1;

@@ -8,15 +8,16 @@ package org.jboss.as.cli.aesh;
 
 import org.jboss.aesh.console.command.completer.CompleterInvocation;
 import org.jboss.aesh.console.command.completer.CompleterInvocationProvider;
+import org.jboss.as.cli.CommandContext;
 
 /**
  * @author <a href="mailto:stale.pedersen@jboss.org">Ståle W. Pedersen</a>
  */
 public class CliCompleterInvocationProvider implements CompleterInvocationProvider<CliCompleterInvocation> {
 
-    private ConnectionContext ctx;
+    private CommandContext ctx;
 
-    public CliCompleterInvocationProvider(ConnectionContext ctx) {
+    public CliCompleterInvocationProvider(CommandContext ctx) {
         this.ctx = ctx;
     }
 

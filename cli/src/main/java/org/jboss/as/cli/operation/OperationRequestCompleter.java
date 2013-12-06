@@ -26,7 +26,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.jboss.aesh.cl.completer.OptionCompleter;
 import org.jboss.as.cli.CommandArgument;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
@@ -34,7 +33,6 @@ import org.jboss.as.cli.CommandLineCompleter;
 import org.jboss.as.cli.CommandLineFormat;
 import org.jboss.as.cli.EscapeSelector;
 import org.jboss.as.cli.Util;
-import org.jboss.as.cli.aesh.CliCompleterInvocation;
 import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
 
 
@@ -57,22 +55,6 @@ public class OperationRequestCompleter implements CommandLineCompleter {
             }
             return INSTANCE.complete(ctx, parsedOp, buffer, cursor, candidates);
         }};
-
-    public static final PathCompleter PATH_COMPLETER = new OptionCompleter<CliCompleterInvocation>() {
-        final DefaultCallbackHandler parsedOp = new DefaultCallbackHandler();
-
-        @Override
-        public void complete(CliCompleterInvocation cliCompleterInvocation) {
-            try {
-                parsedOp.parseOperation(cliCompleterInvocation.getConnectionContext().getCurrentNodePath(),
-                        cliCompleterInvocation.getGivenCompleteValue());
-            }
-            catch (CommandFormatException e) {
-                e.printStackTrace();
-            }
-        }
-
-    };
 
     public static final EscapeSelector ESCAPE_SELECTOR = new EscapeSelector() {
         @Override

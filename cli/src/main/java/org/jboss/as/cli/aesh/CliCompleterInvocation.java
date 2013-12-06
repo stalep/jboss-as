@@ -9,6 +9,7 @@ package org.jboss.as.cli.aesh;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.completer.CompleterInvocation;
 import org.jboss.aesh.terminal.TerminalString;
+import org.jboss.as.cli.CommandContext;
 
 import java.util.List;
 
@@ -19,11 +20,11 @@ public class CliCompleterInvocation implements CompleterInvocation {
 
     private CompleterInvocation delegate;
 
-    private ConnectionContext connectionContext;
+    private CommandContext commandContext;
 
-    public CliCompleterInvocation(CompleterInvocation delegate, ConnectionContext ctx) {
+    public CliCompleterInvocation(CompleterInvocation delegate, CommandContext ctx) {
         this.delegate = delegate;
-        this.connectionContext = ctx;
+        this.commandContext = ctx;
     }
 
     @Override
@@ -81,7 +82,7 @@ public class CliCompleterInvocation implements CompleterInvocation {
         delegate.setAppendSpace(b);
     }
 
-    public ConnectionContext getConnectionContext() {
-        return connectionContext;
+    public CommandContext getCommandContext() {
+        return commandContext;
     }
 }

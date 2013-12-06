@@ -48,9 +48,7 @@ import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
 
-import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
@@ -80,7 +78,6 @@ import org.jboss.as.cli.CommandRegistry;
 import org.jboss.as.cli.ControllerAddressResolver;
 import org.jboss.as.cli.ControllerAddress;
 import org.jboss.as.cli.OperationCommand;
-import org.jboss.as.cli.SSLConfig;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.aesh.connection.CliSSLContext;
 import org.jboss.as.cli.batch.Batch;
@@ -156,7 +153,6 @@ import org.jboss.logging.Logger;
 import org.jboss.logging.Logger.Level;
 import org.jboss.sasl.callback.DigestHashCallback;
 import org.jboss.sasl.util.HexConverter;
-import org.wildfly.security.manager.WildFlySecurityManager;
 
 /**
  *
@@ -198,7 +194,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     /** the time to connect to a controller */
     private final int connectionTimeout;
     /** The SSLContext when managed by the CLI */
-    private SSLContext sslContext;
+    private CliSSLContext sslContext;
     /** The TrustManager in use by the SSLContext, a reference is kept to rejected certificates can be captured. */
     private LazyDelagatingTrustManager trustManager;
     /** various key/value pairs */
@@ -285,8 +281,8 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
 
         if (initConsole) {
             cmdCompleter = new CommandCompleter(cmdRegistry);
-            initBasicConsole(null, null);
-            console.addCompleter(cmdCompleter);
+            //initBasicConsole(null, null);
+            //console.addCompleter(cmdCompleter);
             this.operationCandidatesProvider = new DefaultOperationCandidatesProvider();
         } else {
             this.cmdCompleter = null;
@@ -443,6 +439,8 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
      * KeyManager.
      */
     private void initSSLContext() throws CliInitializationException {
+        sslContext = new CliSSLContext(config.getSslConfig());
+        /*
         // If the standard properties have been set don't enable and CLI specific stores.
         if (WildFlySecurityManager.getPropertyPrivileged("javax.net.ssl.keyStore", null) != null
                 || WildFlySecurityManager.getPropertyPrivileged("javax.net.ssl.trustStore", null) != null) {
@@ -518,6 +516,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         } catch (GeneralSecurityException e) {
             throw new CliInitializationException(e);
         }
+        */
     }
 
     @Override
@@ -799,7 +798,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
                     log.debug("connecting to " + address.getHost() + ':' + address.getPort() + " as " + username);
                 }
                 ModelControllerClient tempClient = ModelControllerClientFactory.CUSTOM.
-                        getClient(address, cbh, disableLocalAuth, sslContext, connectionTimeout, this);
+                        getClient(address, cbh, disableLocalAuth, sslContext.getSslContext(), connectionTimeout, this);
                 retry = tryConnection(tempClient, address);
                 if(!retry) {
                     newClient = tempClient;
@@ -1266,7 +1265,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
 
     @Override
     public CliSSLContext getSSLContext() {
-        return null;
+        return sslContext;
     }
 
     @Override
