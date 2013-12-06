@@ -71,6 +71,7 @@ public class AeshCliConsole {
                 .settings(settingsBuilder.create())
                 .commandInvocationProvider(services)
                 .completerInvocationProvider(new CliCompleterInvocationProvider(commandContext))
+                .commandNotFoundHandler(new CliCommandNotFound())
                 .prompt(new Prompt("[aesh@test]$ "))
                 .create();
 
