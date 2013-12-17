@@ -32,6 +32,8 @@ import org.jboss.as.cli.CommandHistory;
 import org.jboss.as.cli.CommandLineCompleter;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.ControllerAddress;
+import org.jboss.as.cli.ControllerAddressResolver;
+import org.jboss.as.cli.aesh.connection.CliSSLContext;
 import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.batch.BatchedCommand;
 import org.jboss.as.cli.operation.OperationCandidatesProvider;
@@ -192,6 +194,11 @@ public class MockCommandContext implements CommandContext {
     @Deprecated
     public void connectController(String host, int port) throws CommandLineException {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void bindClient(ModelControllerClient newClient, ControllerAddress address) {
+
     }
 
     @Override
@@ -366,6 +373,31 @@ public class MockCommandContext implements CommandContext {
     @Override
     public void setSilent(boolean silent) {
         this.silent = silent;
+    }
+
+    @Override
+    public ControllerAddressResolver getAddressResolver() {
+        return null;
+    }
+
+    @Override
+    public CliSSLContext getSSLContext() {
+        return null;
+    }
+
+    @Override
+    public boolean doDisableLocalAuth() {
+        return false;
+    }
+
+    @Override
+    public int getConnectionTimeout() {
+        return 0;
+    }
+
+    @Override
+    public void handleClose() {
+
     }
 
     @Override

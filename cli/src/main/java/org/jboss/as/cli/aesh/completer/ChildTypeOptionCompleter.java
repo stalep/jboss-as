@@ -7,7 +7,7 @@
 package org.jboss.as.cli.aesh.completer;
 
 import org.jboss.aesh.cl.completer.OptionCompleter;
-import org.jboss.as.cli.aesh.CliCompleterInvocation;
+import org.jboss.as.cli.aesh.providers.CliCompleterInvocation;
 
 /**
  * @author <a href="mailto:stale.pedersen@jboss.org">Ståle W. Pedersen</a>

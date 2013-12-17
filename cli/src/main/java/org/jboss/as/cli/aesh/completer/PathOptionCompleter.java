@@ -8,7 +8,7 @@ package org.jboss.as.cli.aesh.completer;
 
 import org.jboss.aesh.cl.completer.OptionCompleter;
 import org.jboss.as.cli.CommandFormatException;
-import org.jboss.as.cli.aesh.CliCompleterInvocation;
+import org.jboss.as.cli.aesh.providers.CliCompleterInvocation;
 import org.jboss.as.cli.operation.OperationRequestCompleter;
 import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
 

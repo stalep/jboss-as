@@ -4,8 +4,9 @@
  * Licensed under the Eclipse Public License version 1.0, available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.jboss.as.cli.aesh;
+package org.jboss.as.cli.aesh.providers;
 
+import org.jboss.aesh.console.AeshContext;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.completer.CompleterInvocation;
 import org.jboss.aesh.terminal.TerminalString;
@@ -80,6 +81,11 @@ public class CliCompleterInvocation implements CompleterInvocation {
     @Override
     public void setAppendSpace(boolean b) {
         delegate.setAppendSpace(b);
+    }
+
+    @Override
+    public AeshContext getAeshContext() {
+        return delegate.getAeshContext();
     }
 
     public CommandContext getCommandContext() {

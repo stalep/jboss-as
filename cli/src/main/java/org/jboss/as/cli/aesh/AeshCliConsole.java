@@ -18,6 +18,8 @@ import org.jboss.as.cli.aesh.commands.ConnectionCommand;
 import org.jboss.as.cli.aesh.commands.ExitCommand;
 import org.jboss.as.cli.aesh.commands.LsCommand;
 import org.jboss.as.cli.aesh.commands.QuitCommand;
+import org.jboss.as.cli.aesh.providers.CliCommandInvocationProvider;
+import org.jboss.as.cli.aesh.providers.CliCompleterInvocationProvider;
 
 import java.io.InputStream;
 import java.io.OutputStream;
