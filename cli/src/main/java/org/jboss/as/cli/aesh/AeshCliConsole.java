@@ -21,6 +21,7 @@ import org.jboss.as.cli.aesh.commands.QuitCommand;
 import org.jboss.as.cli.aesh.providers.CliCommandInvocationProvider;
 import org.jboss.as.cli.aesh.providers.CliCompleterInvocationProvider;
 import org.jboss.as.cli.aesh.providers.CliConverterInvocationProvider;
+import org.jboss.as.cli.aesh.providers.CliValidatorInvocationProvider;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -76,6 +77,7 @@ public class AeshCliConsole {
                 .completerInvocationProvider(new CliCompleterInvocationProvider(commandContext))
                 .commandNotFoundHandler(new CliCommandNotFound())
                 .converterInvocationProvider(new CliConverterInvocationProvider(commandContext))
+                .validatorInvocationProvider(new CliValidatorInvocationProvider(commandContext))
                 .prompt(new Prompt("[aesh@test]$ "))
                 .create();
 

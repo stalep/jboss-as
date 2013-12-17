@@ -227,7 +227,7 @@ public class CliLauncher {
             }
 
             // Interactive mode
-            cmdCtx = initCommandContext(defaultController, username, password, noLocalAuth, true, connect, connectionTimeout);
+            cmdCtx = initAeshCommandContext(defaultController, username, password, noLocalAuth, true, connect, connectionTimeout);
             //runcom(cmdCtx);
             //cmdCtx.interact();
             AeshCliConsole cliConsole = new AeshCliConsole(cmdCtx);
@@ -246,6 +246,18 @@ public class CliLauncher {
             //}
         }
         //System.exit(exitCode);
+    }
+
+    private static CommandContext initAeshCommandContext(String defaultController, String username, char[] password, boolean disableLocalAuth, boolean initConsole, boolean connect, final int connectionTimeout) throws CliInitializationException {
+        final CommandContext cmdCtx = new AeshCommandContext(defaultController, username, password, disableLocalAuth, initConsole, connectionTimeout);
+        if(connect) {
+            try {
+                cmdCtx.connectController();
+            } catch (CommandLineException e) {
+                throw new CliInitializationException("Failed to connect to the controller", e);
+            }
+        }
+        return cmdCtx;
     }
 
     private static CommandContext initCommandContext(String defaultController, String username, char[] password, boolean disableLocalAuth, boolean initConsole, boolean connect, final int connectionTimeout) throws CliInitializationException {

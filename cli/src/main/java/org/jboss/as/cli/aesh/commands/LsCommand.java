@@ -15,12 +15,11 @@ import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.aesh.completer.PathOptionCompleter;
-import org.jboss.as.cli.operation.CommandLineParser;
+import org.jboss.as.cli.aesh.converter.OperationRequestAddressConverter;
+import org.jboss.as.cli.aesh.validator.OperationRequestAddressValidator;
 import org.jboss.as.cli.operation.OperationFormatException;
 import org.jboss.as.cli.operation.OperationRequestAddress;
 import org.jboss.as.cli.operation.ParsedCommandLine;
-import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
-import org.jboss.as.cli.operation.impl.DefaultOperationRequestAddress;
 import org.jboss.as.cli.util.SimpleTable;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.Property;
@@ -37,8 +36,10 @@ import java.util.Locale;
 @CommandDefinition(name = "ls", description = "list resources")
 public class LsCommand implements Command<CliCommandInvocation> {
 
-    @Arguments(completer = PathOptionCompleter.class)
-    private List<String> args;
+    @Arguments(completer = PathOptionCompleter.class,
+            converter = OperationRequestAddressConverter.class, defaultValue = ".",
+            validator = OperationRequestAddressValidator.class)
+    private List<OperationRequestAddress> args;
 
     @Option(name = "list", shortName = 'l', required = false, hasValue = false)
     private boolean list;
@@ -63,7 +64,8 @@ public class LsCommand implements Command<CliCommandInvocation> {
         final ParsedCommandLine parsedCmd = ctx.getParsedCommandLine();
         String nodePath = null; //this.nodePath.getValue(parsedCmd);
 
-        final OperationRequestAddress address;
+        final OperationRequestAddress address = args.get(0);
+        /*
         if (nodePath != null) {
             address = new DefaultOperationRequestAddress(ctx.getCurrentNodePath());
             CommandLineParser.CallbackHandler handler = new DefaultCallbackHandler(address);
@@ -82,6 +84,7 @@ public class LsCommand implements Command<CliCommandInvocation> {
         } else {
             address = new DefaultOperationRequestAddress(ctx.getCurrentNodePath());
         }
+        */
 
         List<String> names = null;
         if(address.endsOnType()) {

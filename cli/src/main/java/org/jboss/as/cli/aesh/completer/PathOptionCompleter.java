@@ -7,10 +7,8 @@
 package org.jboss.as.cli.aesh.completer;
 
 import org.jboss.aesh.cl.completer.OptionCompleter;
-import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.aesh.providers.CliCompleterInvocation;
 import org.jboss.as.cli.operation.OperationRequestCompleter;
-import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,19 +20,12 @@ public class PathOptionCompleter implements OptionCompleter<CliCompleterInvocati
 
     @Override
     public void complete(CliCompleterInvocation cliCompleterInvocation) {
-        final DefaultCallbackHandler parsedOp = new DefaultCallbackHandler();
-        try {
-            parsedOp.parseOperation(cliCompleterInvocation.getCommandContext().getCurrentNodePath(),
-                    cliCompleterInvocation.getGivenCompleteValue());
-
-            List<String> candidates = new ArrayList<String>();
-            int cursor = OperationRequestCompleter.INSTANCE.complete(cliCompleterInvocation.getCommandContext(), parsedOp,
-                    cliCompleterInvocation.getGivenCompleteValue(),
-                    cliCompleterInvocation.getGivenCompleteValue().length(), candidates);
-            cliCompleterInvocation.addAllCompleterValues(candidates);
-        }
-        catch (CommandFormatException e) {
-            e.printStackTrace();
-        }
+        List<String> candidates = new ArrayList<String>();
+        int pos = 0;
+        if(cliCompleterInvocation.getGivenCompleteValue() != null)
+            pos = cliCompleterInvocation.getGivenCompleteValue().length();
+        int cursor = OperationRequestCompleter.ARG_VALUE_COMPLETER.complete(cliCompleterInvocation.getCommandContext(),
+                cliCompleterInvocation.getGivenCompleteValue(), pos, candidates);
+        cliCompleterInvocation.addAllCompleterValues(candidates);
     }
 }

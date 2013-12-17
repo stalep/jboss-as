@@ -53,8 +53,8 @@ import static org.jboss.as.cli.aesh.commands.ConnectionCommand.ConnectionStatus.
 @CommandDefinition(name = "connect", description = "connect to the specified JBoss instance")
 public class ConnectionCommand implements Command<CliCommandInvocation>, ConsoleCommand, CallbackHandler {
 
-    @Arguments
-    private List<String> controllers;
+    @Arguments(defaultValue = {"localhost"})
+    private List<String> host;
 
     private static final Logger log = Logger.getLogger(ConnectionCommand.class);
     private static final String[] FINGERPRINT_ALGORITHMS = new String[] { "MD5", "SHA1" };
@@ -80,11 +80,11 @@ public class ConnectionCommand implements Command<CliCommandInvocation>, Console
     public CommandResult execute(final CliCommandInvocation commandInvocation) throws IOException {
         this.ctx = commandInvocation.getCommandContext();
 
-        if(controllers != null && controllers.size() > 0) {
+        if(host != null && host.size() > 0) {
             this.shell = commandInvocation.getShell();
             attached = true;
             commandInvocation.attachConsoleCommand(this);
-            connectController(controllers.get(0));
+            connectController(host.get(0));
         }
 
         return CommandResult.SUCCESS;
