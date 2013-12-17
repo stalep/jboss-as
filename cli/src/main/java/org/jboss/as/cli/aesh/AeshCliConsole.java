@@ -20,6 +20,7 @@ import org.jboss.as.cli.aesh.commands.LsCommand;
 import org.jboss.as.cli.aesh.commands.QuitCommand;
 import org.jboss.as.cli.aesh.providers.CliCommandInvocationProvider;
 import org.jboss.as.cli.aesh.providers.CliCompleterInvocationProvider;
+import org.jboss.as.cli.aesh.providers.CliConverterInvocationProvider;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -74,6 +75,7 @@ public class AeshCliConsole {
                 .commandInvocationProvider(services)
                 .completerInvocationProvider(new CliCompleterInvocationProvider(commandContext))
                 .commandNotFoundHandler(new CliCommandNotFound())
+                .converterInvocationProvider(new CliConverterInvocationProvider(commandContext))
                 .prompt(new Prompt("[aesh@test]$ "))
                 .create();
 

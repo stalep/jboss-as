@@ -13,6 +13,7 @@ import org.jboss.aesh.console.command.registry.CommandRegistry;
 import org.jboss.aesh.console.operator.ControlOperator;
 import org.jboss.aesh.terminal.Shell;
 import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.operation.OperationRequestAddress;
 
 /**
  * @author <a href="mailto:stale.pedersen@jboss.org">Ståle W. Pedersen</a>
@@ -70,4 +71,38 @@ public class CliCommandInvocation implements CommandInvocation {
     public void stop() {
         commandInvocation.stop();
     }
+
+    public void updatePrompt() {
+        StringBuilder builder = new StringBuilder();
+
+        builder.append('[');
+        String controllerHost = ctx.getControllerHost();
+        if(controllerHost != null) {
+            if(ctx.isDomainMode())
+                builder.append("domain@");
+            else
+                builder.append("standalone@");
+
+            builder.append(controllerHost).append(':').append(ctx.getControllerPort()).append(' ');
+        }
+        else
+            builder.append("disconnected ");
+
+        OperationRequestAddress prefix = ctx.getCurrentNodePath();
+        if(prefix == null || prefix.isEmpty())
+            builder.append('/');
+        else {
+            builder.append(prefix.getNodeType());
+            final String nodeName = prefix.getNodeName();
+            if (nodeName != null)
+                builder.append('=').append(nodeName);
+        }
+
+        if(ctx.isBatchMode())
+            builder.append(" #");
+        builder.append("] ");
+
+        commandInvocation.setPrompt(new Prompt(builder.toString()));
+    }
+
 }
