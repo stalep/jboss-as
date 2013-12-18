@@ -162,6 +162,11 @@ public class MockCommandContext implements CommandContext {
         return prefix;
     }
 
+    @Override
+    public void setCurrentNodePath(OperationRequestAddress address) {
+
+    }
+
     /* (non-Javadoc)
      * @see org.jboss.as.cli.CommandContext#getPrefixFormatter()
      */

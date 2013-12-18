@@ -11,17 +11,10 @@ import org.jboss.aesh.cl.CommandDefinition;
 import org.jboss.aesh.cl.Option;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandResult;
-import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.CommandLineException;
-import org.jboss.as.cli.Util;
 import org.jboss.as.cli.aesh.completer.PathOptionCompleter;
 import org.jboss.as.cli.aesh.converter.OperationRequestAddressConverter;
 import org.jboss.as.cli.aesh.validator.ChangeNodeValidator;
 import org.jboss.as.cli.operation.OperationRequestAddress;
-import org.jboss.as.cli.operation.impl.DefaultCallbackHandler;
-import org.jboss.as.cli.operation.impl.DefaultOperationRequestAddress;
-import org.jboss.as.cli.parsing.ParserUtil;
-import org.jboss.dmr.ModelNode;
 
 import java.io.IOException;
 import java.util.List;
@@ -46,12 +39,9 @@ public class CdCommand implements Command<CliCommandInvocation> {
         }
         else {
             if(arguments != null &&arguments.size() > 0) {
+                cliCommandInvocation.getCommandContext().setCurrentNodePath(arguments.get(0));
 
-                final OperationRequestAddress tmp = new DefaultOperationRequestAddress(cliCommandInvocation.getCommandContext().getCurrentNodePath());
-
-
-                //ParserUtil.parseOperationRequest(tmp, new DefaultCallbackHandler(tmp));
-
+                cliCommandInvocation.updatePrompt();
             }
         }
         return CommandResult.SUCCESS;

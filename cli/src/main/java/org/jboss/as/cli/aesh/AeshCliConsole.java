@@ -14,6 +14,7 @@ import org.jboss.aesh.console.command.registry.AeshCommandRegistryBuilder;
 import org.jboss.aesh.console.command.registry.CommandRegistry;
 import org.jboss.aesh.console.settings.SettingsBuilder;
 import org.jboss.as.cli.CommandContext;
+import org.jboss.as.cli.aesh.commands.CdCommand;
 import org.jboss.as.cli.aesh.commands.ConnectionCommand;
 import org.jboss.as.cli.aesh.commands.ExitCommand;
 import org.jboss.as.cli.aesh.commands.LsCommand;
@@ -78,7 +79,7 @@ public class AeshCliConsole {
                 .commandNotFoundHandler(new CliCommandNotFound())
                 .converterInvocationProvider(new CliConverterInvocationProvider(commandContext))
                 .validatorInvocationProvider(new CliValidatorInvocationProvider(commandContext))
-                .prompt(new Prompt("[aesh@test]$ "))
+                .prompt(new Prompt("[disconnected /] "))
                 .create();
 
         console.setCurrentCommandInvocationProvider(PROVIDER);
@@ -91,6 +92,7 @@ public class AeshCliConsole {
                 .command(ExitCommand.class)
                 .command(LsCommand.class)
                 .command(ConnectionCommand.class)
+                .command(CdCommand.class)
                 .create();
     }
 }

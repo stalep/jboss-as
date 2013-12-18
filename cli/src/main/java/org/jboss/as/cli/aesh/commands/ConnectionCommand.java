@@ -71,6 +71,8 @@ public class ConnectionCommand implements Command<CliCommandInvocation>, Console
     private StringBuilder password;
     private String digest;
 
+    private CliCommandInvocation commandInvocation;
+
     public ConnectionCommand() {
         this.username = new StringBuilder();
         this.password = new StringBuilder();
@@ -79,6 +81,7 @@ public class ConnectionCommand implements Command<CliCommandInvocation>, Console
     @Override
     public CommandResult execute(final CliCommandInvocation commandInvocation) throws IOException {
         this.ctx = commandInvocation.getCommandContext();
+        this.commandInvocation = commandInvocation;
 
         if(host != null && host.size() > 0) {
             this.shell = commandInvocation.getShell();
@@ -106,7 +109,9 @@ public class ConnectionCommand implements Command<CliCommandInvocation>, Console
             //if no exceptions are thrown we bind it
             ctx.bindClient(tempClient, address);
             log.info("we're connected...");
-            System.out.println("we're connected");
+
+            commandInvocation.updatePrompt();
+
             release();
         }
         catch (CommandLineException | IOException e) {

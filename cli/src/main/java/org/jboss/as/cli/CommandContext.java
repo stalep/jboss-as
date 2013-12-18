@@ -105,6 +105,8 @@ public interface CommandContext extends ConnectionContext {
      */
     OperationRequestAddress getCurrentNodePath();
 
+    void setCurrentNodePath(OperationRequestAddress address);
+
     /**
      * Returns the prefix formatter.
      * @return the prefix formatter.

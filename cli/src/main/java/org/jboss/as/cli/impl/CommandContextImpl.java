@@ -200,7 +200,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     /** various key/value pairs */
     private Map<String, Object> map = new HashMap<String, Object>();
     /** operation request address prefix */
-    private final OperationRequestAddress prefix = new DefaultOperationRequestAddress();
+    private OperationRequestAddress prefix = new DefaultOperationRequestAddress();
     /** the prefix formatter */
     private final NodePathFormatter prefixFormatter = DefaultPrefixFormatter.INSTANCE;
     /** provider of operation request candidates for tab-completion */
@@ -766,6 +766,11 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     @Override
     public OperationRequestAddress getCurrentNodePath() {
         return prefix;
+    }
+
+    @Override
+    public void setCurrentNodePath(OperationRequestAddress address) {
+        prefix = address;
     }
 
     @Override

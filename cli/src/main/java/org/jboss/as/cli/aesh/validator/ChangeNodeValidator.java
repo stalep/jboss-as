@@ -9,7 +9,6 @@ package org.jboss.as.cli.aesh.validator;
 import org.jboss.aesh.cl.validator.OptionValidator;
 import org.jboss.aesh.cl.validator.OptionValidatorException;
 import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.Util;
 import org.jboss.as.cli.aesh.providers.CliValidatorInvocationImpl;
 import org.jboss.as.cli.operation.OperationRequestAddress;
