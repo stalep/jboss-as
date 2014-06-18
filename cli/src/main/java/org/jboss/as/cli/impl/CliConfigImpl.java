@@ -54,7 +54,7 @@ import org.wildfly.security.manager.WildFlySecurityManager;
  *
  * @author Alexey Loubyansky
  */
-class CliConfigImpl implements CliConfig {
+public class CliConfigImpl implements CliConfig {
 
     private static final String JBOSS_XML_CONFIG = "jboss.cli.config";
     private static final String CURRENT_WORKING_DIRECTORY = "user.dir";
@@ -83,7 +83,7 @@ class CliConfigImpl implements CliConfig {
 
     private static final Logger log = Logger.getLogger(CliConfig.class);
 
-    static CliConfig load(final CommandContext ctx) throws CliInitializationException {
+    public static CliConfig load(final CommandContext ctx) throws CliInitializationException {
         File jbossCliFile = findCLIFileFromSystemProperty();
 
         if (jbossCliFile == null) {

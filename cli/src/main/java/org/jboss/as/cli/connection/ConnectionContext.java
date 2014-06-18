@@ -1,81 +1,36 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2011, Red Hat, Inc., and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * Copyright 2012 Red Hat, Inc. and/or its affiliates.
  *
- * This is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- *
- * This software is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this software; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ * Licensed under the Eclipse Public License version 1.0, available at
+ * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.jboss.as.cli;
+package org.jboss.as.cli.connection;
 
-import java.io.File;
-import java.util.Collection;
-
+import org.jboss.as.cli.CliConfig;
+import org.jboss.as.cli.CommandFormatException;
+import org.jboss.as.cli.CommandLineException;
+import org.jboss.as.cli.ControllerAddress;
+import org.jboss.as.cli.ControllerAddressResolver;
 import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.batch.BatchedCommand;
-import org.jboss.as.cli.connection.CliSSLContext;
-import org.jboss.as.cli.operation.OperationCandidatesProvider;
-import org.jboss.as.cli.operation.OperationRequestAddress;
-import org.jboss.as.cli.operation.CommandLineParser;
-import org.jboss.as.cli.operation.ParsedCommandLine;
+import org.jboss.as.cli.impl.ModelControllerClientFactory;
 import org.jboss.as.cli.operation.NodePathFormatter;
+import org.jboss.as.cli.operation.OperationRequestAddress;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
 
+import java.io.File;
 
 /**
- *
- * @author Alexey Loubyansky
+ * @author <a href="mailto:stale.pedersen@jboss.org">Ståle W. Pedersen</a>
  */
-public interface CommandContext {
+public interface ConnectionContext extends ModelControllerClientFactory.ConnectionCloseHandler {
 
     /**
      * Returns the JBoss CLI configuration.
      * @return  CLI configuration
      */
     CliConfig getConfig();
-
-    /**
-     * Returns the current command's arguments as a string.
-     * @return current command's arguments as a string or null if the command was entered w/o arguments.
-     */
-    String getArgumentsString();
-
-    /**
-     * Parsed command line arguments.
-     * @return  parsed command line arguments.
-     */
-    ParsedCommandLine getParsedCommandLine();
-
-    /**
-     * Prints a string to the CLI's output.
-     * @param message the message to print
-     */
-    void printLine(String message);
-
-    /**
-     * Prints a collection of strings as columns to the CLI's output.
-     * @param col  the collection of strings to print as columns.
-     */
-    void printColumns(Collection<String> col);
-
-    /**
-     * Clears the screen.
-     */
-    void clearScreen();
 
     /**
      * Terminates the command line session.
@@ -160,36 +115,16 @@ public interface CommandContext {
     /**
      * Bind the controller to an existing, connected client.
      */
-    void bindClient(ModelControllerClient newClient);
+    void bindClient(ModelControllerClient newClient, ControllerAddress address);
 
-    void initNewClient(ModelControllerClient newClient, ControllerAddress address);
     /**
      * Closes the previously established connection with the controller client.
      * If the connection hasn't been established, the method silently returns.
      */
     void disconnectController();
 
-    /**
-     * Returns the default host the controller client will be connected to.
-     *
-     * @deprecated Use {@link CommandContext#getDefaultControllerAddress()} instead.
-     *
-     * @return  the default host the controller client will be connected to.
-     */
-    @Deprecated
-    String getDefaultControllerHost();
 
-    /**
-     * Returns the default port the controller client will be connected to.
-     *
-     * @deprecated Use {@link CommandContext#getDefaultControllerAddress()} instead.
-     *
-     * @return  the default port the controller client will be connected to.
-     */
-    @Deprecated
-    int getDefaultControllerPort();
-
-    /**
+     /**
      * The default address of the default controller to connect to.
      *
      * @return The default address.
@@ -213,12 +148,6 @@ public interface CommandContext {
     int getControllerPort();
 
     /**
-     * Returns the current operation request parser.
-     * @return  current operation request parser.
-     */
-    CommandLineParser getCommandLineParser();
-
-    /**
      * Returns the current prefix.
      * @return current prefix
      */
@@ -229,18 +158,6 @@ public interface CommandContext {
      * @return the prefix formatter.
      */
     NodePathFormatter getNodePathFormatter();
-
-    /**
-     * Returns the provider of operation request candidates for tab-completion.
-     * @return provider of operation request candidates for tab-completion.
-     */
-    OperationCandidatesProvider getOperationCandidatesProvider();
-
-    /**
-     * Returns the history of all the commands and operations.
-     * @return  the history of all the commands and operations.
-     */
-    CommandHistory getHistory();
 
     /**
      * Checks whether the CLI is in the batch mode.
@@ -280,23 +197,11 @@ public interface CommandContext {
     ModelNode buildRequest(String line) throws CommandFormatException;
 
     /**
-     * Returns the default command line completer.
-     * @return  the default command line completer.
-     */
-    CommandLineCompleter getDefaultCommandCompleter();
-
-    /**
      * Indicates whether the CLI is in the domain mode or standalone one (assuming established
      * connection to the controller).
      * @return  true if the CLI is connected to the domain controller, otherwise false.
      */
     boolean isDomainMode();
-
-    /**
-     * Adds a listener for CLI events.
-     * @param listener  the listener
-     */
-    void addEventListener(CliEventListener listener);
 
     /**
      * Returns value that should be used as the exit code of the JVM process.
@@ -330,12 +235,6 @@ public interface CommandContext {
      * @throws CommandFormatException  in case there was an error handling the command or operation
      */
     void handleSafe(String line);
-
-    /**
-     * This method will start an interactive session.
-     * It requires an initialized at the construction time console.
-     */
-    void interact();
 
     /**
      * Returns current default filesystem directory.
@@ -399,59 +298,14 @@ public interface CommandContext {
      */
     void setSilent(boolean silent);
 
-    /**
-     * Returns the current terminal window width in case the console
-     * has been initialized. Otherwise -1.
-     *
-     * @return  current terminal with if the console has been initialized,
-     *          -1 otherwise
-     */
-    int getTerminalWidth();
+    ControllerAddressResolver getAddressResolver();
 
-    /**
-     * Returns the current terminal window height in case the console
-     * has been initialized. Otherwise -1.
-     *
-     * @return  current terminal height if the console has been initialized,
-     *          -1 otherwise
-     */
-    int getTerminalHeight();
 
-    /**
-     * Initializes a variable with the given name with the given value.
-     * The name of the variable must follow the rules for Java identifiers
-     * but not contain '$' character.
-     * If the variable already exists, its value will be silently overridden.
-     * Passing in null as the value will remove the variable altogether.
-     * If the variable with the given name has not been defined and the value
-     * passed in is null, the method will return silently.
-     *
-     * @param name  name of the variable
-     * @param value  value for the variable
-     * @throws CommandLineException  in case the name contains illegal characters
-     */
-    void setVariable(String name, String value) throws CommandLineException;
+    CliSSLContext getSSLContext();
 
-    /**
-     * Returns the value for the variable. If the variable has not been defined
-     * the method will return null.
-     *
-     * @param name  name of the variable
-     * @return  the value of the variable or null if the variable has not been
-     *          defined
-     */
-    String getVariable(String name);
+    boolean doDisableLocalAuth();
 
-    /**
-     * Returns a collection of all the defined variable names.
-     * If there no variables defined, an empty collection will be returned.
-     *
-     * @return  collection of all the defined variable names or
-     *          an empty collection if no variables has been defined
-     */
-    Collection<String> getVariables();
+    int getConnectionTimeout();
 
-    ControllerAddressResolver getControllerAddressResolver();
-
-    CliSSLContext getCliSSLContext();
+    void handleClose();
 }
