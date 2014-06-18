@@ -281,7 +281,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         if (initConsole) {
             cmdCompleter = new CommandCompleter(cmdRegistry);
             //initBasicConsole(null, null);
-            console.addCompleter(cmdCompleter);
+            //console.addCompleter(cmdCompleter);
             this.operationCandidatesProvider = new DefaultOperationCandidatesProvider();
         } else {
             this.cmdCompleter = null;
@@ -315,7 +315,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
 
         cmdCompleter = new CommandCompleter(cmdRegistry);
         //initBasicConsole(consoleInput, consoleOutput);
-        console.addCompleter(cmdCompleter);
+        //console.addCompleter(cmdCompleter);
         this.operationCandidatesProvider = new DefaultOperationCandidatesProvider();
 
         addShutdownHook();

@@ -32,8 +32,10 @@ import org.jboss.as.cli.CommandHistory;
 import org.jboss.as.cli.CommandLineCompleter;
 import org.jboss.as.cli.CommandLineException;
 import org.jboss.as.cli.ControllerAddress;
+import org.jboss.as.cli.ControllerAddressResolver;
 import org.jboss.as.cli.batch.BatchManager;
 import org.jboss.as.cli.batch.BatchedCommand;
+import org.jboss.as.cli.connection.CliSSLContext;
 import org.jboss.as.cli.operation.OperationCandidatesProvider;
 import org.jboss.as.cli.operation.OperationFormatException;
 import org.jboss.as.cli.operation.OperationRequestAddress;
@@ -199,6 +201,10 @@ public class MockCommandContext implements CommandContext {
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public void initNewClient(ModelControllerClient newClient, ControllerAddress address) {
+
+    }
 
     @Override
     public void disconnectController() {
@@ -393,6 +399,16 @@ public class MockCommandContext implements CommandContext {
     @Override
     public Collection<String> getVariables() {
         // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ControllerAddressResolver getControllerAddressResolver() {
+        return null;
+    }
+
+    @Override
+    public CliSSLContext getCliSSLContext() {
         return null;
     }
 }

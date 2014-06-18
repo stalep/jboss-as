@@ -14,6 +14,8 @@ import org.jboss.aesh.console.command.registry.AeshCommandRegistryBuilder;
 import org.jboss.aesh.console.command.registry.CommandRegistry;
 import org.jboss.aesh.console.settings.SettingsBuilder;
 import org.jboss.as.cli.command.Connect;
+import org.jboss.as.cli.command.Exit;
+import org.jboss.as.cli.command.Quit;
 import org.jboss.as.cli.provider.CliCommandInvocationProvider;
 import org.jboss.as.cli.provider.CliCompleterInvocationProvider;
 import org.jboss.as.cli.provider.CliConverterInvocationProvider;
@@ -57,11 +59,14 @@ public class AeshCliConsole {
             settingsBuilder.inputStream(consoleInput);
         if(consoleOutput != null)
             settingsBuilder.outputStream(new PrintStream(consoleOutput));
-        settingsBuilder.logging(true);
+
+        settingsBuilder
+                .logging(true)
+                .readInputrc(false)
+                .enableMan(true);
 
         CommandInvocationServices services = new CommandInvocationServices();
         services.registerProvider(PROVIDER, new CliCommandInvocationProvider(commandContext));
-
 
         commandRegistry = createCommandRegistry();
 
@@ -82,8 +87,8 @@ public class AeshCliConsole {
 
     private CommandRegistry createCommandRegistry() {
         return new AeshCommandRegistryBuilder()
-                //.command(QuitCommand.class)
-                //.command(ExitCommand.class)
+                .command(Quit.class)
+                .command(Exit.class)
                 //.command(LsCommand.class)
                 .command(Connect.class)
                 //.command(CdCommand.class)

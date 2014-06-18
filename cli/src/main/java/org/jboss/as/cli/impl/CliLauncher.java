@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
+import org.jboss.as.cli.AeshCliConsole;
 import org.jboss.as.cli.CliInitializationException;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandContextFactory;
@@ -250,12 +251,20 @@ public class CliLauncher {
             }
 
             // Interactive mode
+            /*
             cmdCtx = initCommandContext(defaultController, username, password, noLocalAuth, true, connect, connectionTimeout);
             cmdCtx.interact();
+            */
+            cmdCtx = initAeshCommandContext(defaultController, username, password, noLocalAuth, true, connect, connectionTimeout);
+            AeshCliConsole cliConsole = new AeshCliConsole(cmdCtx);
+            cliConsole.startConsole();
+
         } catch(Throwable t) {
             t.printStackTrace();
             exitCode = 1;
-        } finally {
+        }
+        finally {
+            /*
             if(cmdCtx != null) {
                 cmdCtx.terminateSession();
                 if(cmdCtx.getExitCode() != 0) {
@@ -265,11 +274,25 @@ public class CliLauncher {
             if (!gui) {
                 System.exit(exitCode);
             }
+            */
         }
-        System.exit(exitCode);
+        //System.exit(exitCode);
     }
 
     private static CommandContext initCommandContext(String defaultController, String username, char[] password, boolean disableLocalAuth, boolean initConsole, boolean connect, final int connectionTimeout) throws CliInitializationException {
+        final CommandContext cmdCtx = CommandContextFactory.getInstance().newCommandContext(defaultController, username, password, disableLocalAuth, initConsole, connectionTimeout);
+        if(connect) {
+            try {
+                cmdCtx.connectController();
+            } catch (CommandLineException e) {
+                throw new CliInitializationException("Failed to connect to the controller", e);
+            }
+        }
+        return cmdCtx;
+    }
+
+    private static CommandContext initAeshCommandContext(String defaultController, String username, char[] password, boolean disableLocalAuth, boolean initConsole, boolean connect, final int connectionTimeout) throws CliInitializationException {
+        //final CommandContext cmdCtx = new AeshCommandContext(defaultController, username, password, disableLocalAuth, initConsole, connectionTimeout);
         final CommandContext cmdCtx = CommandContextFactory.getInstance().newCommandContext(defaultController, username, password, disableLocalAuth, initConsole, connectionTimeout);
         if(connect) {
             try {
