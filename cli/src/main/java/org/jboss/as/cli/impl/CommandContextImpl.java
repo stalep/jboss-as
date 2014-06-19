@@ -37,21 +37,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ServiceLoader;
-import java.util.Set;
 
 import javax.net.ssl.SSLException;
-import javax.security.auth.callback.Callback;
-import javax.security.auth.callback.CallbackHandler;
-import javax.security.auth.callback.NameCallback;
-import javax.security.auth.callback.PasswordCallback;
-import javax.security.auth.callback.UnsupportedCallbackException;
-import javax.security.sasl.RealmCallback;
-import javax.security.sasl.RealmChoiceCallback;
 import javax.security.sasl.SaslException;
 
 import org.jboss.as.cli.CliConfig;
@@ -144,7 +135,6 @@ import org.jboss.as.protocol.StreamUtils;
 import org.jboss.dmr.ModelNode;
 import org.jboss.logging.Logger;
 import org.jboss.logging.Logger.Level;
-import org.jboss.sasl.callback.DigestHashCallback;
 import org.jboss.sasl.util.HexConverter;
 import org.xnio.http.RedirectException;
 
@@ -192,7 +182,7 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
     /** various key/value pairs */
     private Map<String, Object> map = new HashMap<>();
     /** operation request address prefix */
-    private final OperationRequestAddress prefix = new DefaultOperationRequestAddress();
+    private OperationRequestAddress prefix = new DefaultOperationRequestAddress();
     /** the prefix formatter */
     private final NodePathFormatter prefixFormatter = DefaultPrefixFormatter.INSTANCE;
     /** provider of operation request candidates for tab-completion */
@@ -738,54 +728,9 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
 
     @Override
     public void connectController(String controller) throws CommandLineException {
-        ControllerAddress address = addressResolver.resolveAddress(controller);
 
-        // In case the alias mappings cause us to enter some form of loop or a badly
-        // configured server does the same,
-        Set<ControllerAddress> visited = new HashSet<ControllerAddress>();
-        visited.add(address);
-        boolean retry;
-        do {
-            try {
-                CallbackHandler cbh = new AuthenticationCallbackHandler(username, password);
-                if (log.isDebugEnabled()) {
-                    log.debug("connecting to " + address.getHost() + ':' + address.getPort() + " as " + username);
-                }
-                ModelControllerClient tempClient = ModelControllerClientFactory.CUSTOM.getClient(address, cbh,
-                        disableLocalAuth, cliSSLContext.getSslContext(), connectionTimeout, this, timeoutHandler);
-                retry = false;
-                tryConnection(tempClient, address);
-                initNewClient(tempClient, address);
-            } catch (RedirectException re) {
-                try {
-                    URI location = new URI(re.getLocation());
-                    if ("http-remoting".equals(address.getProtocol()) && "https".equals(location.getScheme())) {
-                        int port = location.getPort();
-                        if (port < 0) {
-                            port = 443;
-                        }
-                        address = addressResolver.resolveAddress(new URI("https-remoting", null, location.getHost(), port,
-                                null, null, null).toString());
-                        if (visited.add(address) == false) {
-                            throw new CommandLineException("Redirect to address already tried encountered Address="
-                                    + address.toString());
-                        }
-                        retry = true;
-                    } else if (address.getHost().equals(location.getHost()) && address.getPort() == location.getPort()
-                            && location.getPath() != null && location.getPath().length() > 1) {
-                        throw new CommandLineException("Server at " + address.getHost() + ":" + address.getPort()
-                                + " does not support " + address.getProtocol());
-                    } else {
-                        throw new CommandLineException("Unsupported redirect received.", re);
-                    }
-                } catch (URISyntaxException e) {
-                    throw new CommandLineException("Bad redirect location '" + re.getLocation() + "' received.", e);
-                }
-            } catch (IOException e) {
-                throw new CommandLineException("Failed to resolve host '" + address.getHost() + "'", e);
-            }
-        } while (retry);
     }
+
 
     @Override
     @Deprecated
@@ -1002,7 +947,8 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
 
     String promptConnectPart;
 
-    String getPrompt() {
+    @Override
+    public String getPrompt() {
         if(lineBuffer != null) {
             return "> ";
         }
@@ -1309,121 +1255,9 @@ class CommandContextImpl implements CommandContext, ModelControllerClientFactory
         return cliSSLContext;
     }
 
-    private class AuthenticationCallbackHandler implements CallbackHandler {
-
-        // After the CLI has connected the physical connection may be re-established numerous times.
-        // for this reason we cache the entered values to allow for re-use without pestering the end
-        // user.
-
-        private String realm = null;
-        private boolean realmShown = false;
-
-        private String username;
-        private char[] password;
-        private String digest;
-
-        private AuthenticationCallbackHandler(String username, char[] password) {
-            // A local cache is used for scenarios where no values are specified on the command line
-            // and the user wishes to use the connect command to establish a new connection.
-            this.username = username;
-            this.password = password;
-        }
-
-        private AuthenticationCallbackHandler(String username, String digest) {
-            this.username = username;
-            this.digest = digest;
-        }
-
-        @Override
-        public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-            try {
-                timeoutHandler.suspendAndExecute(new Runnable() {
-
-                    @Override
-                    public void run() {
-
-                        try {
-                            dohandle(callbacks);
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        } catch (UnsupportedCallbackException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                });
-            } catch (RuntimeException e) {
-                if (e.getCause() instanceof IOException) {
-                    throw (IOException) e.getCause();
-                } else if (e.getCause() instanceof UnsupportedCallbackException) {
-                    throw (UnsupportedCallbackException) e.getCause();
-                }
-                throw e;
-            }
-
-        }
-
-        private void dohandle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-            // Special case for anonymous authentication to avoid prompting user for their name.
-            if (callbacks.length == 1 && callbacks[0] instanceof NameCallback) {
-                ((NameCallback) callbacks[0]).setName("anonymous CLI user");
-                return;
-            }
-
-            for (Callback current : callbacks) {
-                if (current instanceof RealmCallback) {
-                    RealmCallback rcb = (RealmCallback) current;
-                    String defaultText = rcb.getDefaultText();
-                    realm = defaultText;
-                    rcb.setText(defaultText); // For now just use the realm suggested.
-                } else if (current instanceof RealmChoiceCallback) {
-                    throw new UnsupportedCallbackException(current, "Realm choice not currently supported.");
-                } else if (current instanceof NameCallback) {
-                    NameCallback ncb = (NameCallback) current;
-                    if (username == null) {
-                        showRealm();
-                        try {
-                            username = readLine("Username: ", false, true);
-                        } catch (CommandLineException e) {
-                            throw new IOException("Failed to read username.", e);
-                        }
-                        if (username == null || username.length() == 0) {
-                            throw new SaslException("No username supplied.");
-                        }
-                    }
-                    ncb.setName(username);
-                } else if (current instanceof PasswordCallback && digest == null) {
-                    // If a digest had been set support for PasswordCallback is disabled.
-                    PasswordCallback pcb = (PasswordCallback) current;
-                    if (password == null) {
-                        showRealm();
-                        String temp;
-                        try {
-                            temp = readLine("Password: ", true, false);
-                        } catch (CommandLineException e) {
-                            throw new IOException("Failed to read password.", e);
-                        }
-                        if (temp != null) {
-                            password = temp.toCharArray();
-                        }
-                    }
-                    pcb.setPassword(password);
-                } else if (current instanceof DigestHashCallback && digest != null) {
-                    // We don't support an interactive use of this callback so it must have been set in advance.
-                    DigestHashCallback dhc = (DigestHashCallback) current;
-                    dhc.setHexHash(digest);
-                } else {
-                    error("Unexpected Callback " + current.getClass().getName());
-                    throw new UnsupportedCallbackException(current);
-                }
-            }
-        }
-
-        private void showRealm() {
-            if (realmShown == false && realm != null) {
-                realmShown = true;
-                printLine("Authenticating against security realm: " + realm);
-            }
-        }
+    @Override
+    public void setCurrentNodePath(OperationRequestAddress address) {
+        prefix = address;
     }
 
 }

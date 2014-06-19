@@ -236,6 +236,8 @@ public interface CommandContext {
      */
     OperationCandidatesProvider getOperationCandidatesProvider();
 
+    String getPrompt();
+
     /**
      * Returns the history of all the commands and operations.
      * @return  the history of all the commands and operations.
@@ -454,4 +456,6 @@ public interface CommandContext {
     ControllerAddressResolver getControllerAddressResolver();
 
     CliSSLContext getCliSSLContext();
+
+    void setCurrentNodePath(OperationRequestAddress address);
 }

@@ -13,8 +13,12 @@ import org.jboss.aesh.console.command.invocation.CommandInvocationServices;
 import org.jboss.aesh.console.command.registry.AeshCommandRegistryBuilder;
 import org.jboss.aesh.console.command.registry.CommandRegistry;
 import org.jboss.aesh.console.settings.SettingsBuilder;
+import org.jboss.as.cli.command.Cd;
+import org.jboss.as.cli.command.Clear;
 import org.jboss.as.cli.command.Connect;
 import org.jboss.as.cli.command.Exit;
+import org.jboss.as.cli.command.Logout;
+import org.jboss.as.cli.command.Ls;
 import org.jboss.as.cli.command.Quit;
 import org.jboss.as.cli.provider.CliCommandInvocationProvider;
 import org.jboss.as.cli.provider.CliCompleterInvocationProvider;
@@ -89,9 +93,11 @@ public class AeshCliConsole {
         return new AeshCommandRegistryBuilder()
                 .command(Quit.class)
                 .command(Exit.class)
-                //.command(LsCommand.class)
+                .command(Ls.class)
                 .command(Connect.class)
-                //.command(CdCommand.class)
+                .command(Cd.class)
+                .command(Clear.class)
+                .command(Logout.class)
                 .create();
     }
 }

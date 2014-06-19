@@ -2,6 +2,7 @@ package org.jboss.as.cli.command;
 
 import org.jboss.aesh.cl.Arguments;
 import org.jboss.aesh.cl.CommandDefinition;
+import org.jboss.aesh.console.Prompt;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandResult;
 import org.jboss.as.cli.CommandLineException;
@@ -86,6 +87,8 @@ public class Connect implements Command<CliCommandInvocation>, CallbackHandler {
                 retry = false;
                 tryConnection(tempClient, address);
                 commandInvocation.getCommandContext().initNewClient(tempClient, address);
+                commandInvocation.setPrompt(new Prompt(
+                        commandInvocation.getCommandContext().getPrompt()));
             }
             catch (RedirectException re) {
                 try {
