@@ -43,20 +43,30 @@ public class Connect implements Command<CliCommandInvocation>, CallbackHandler {
     @Override
     public CommandResult execute(CliCommandInvocation commandInvocation) throws IOException, InterruptedException {
         try {
-            connectController(
-            commandInvocation.getCommandContext().getControllerAddressResolver(),
-                    commandInvocation.getCommandContext().getCliSSLContext(),
-                    commandInvocation.getCommandContext().getControllerHost(),
-                    false, 1000,
-                    "foo", "bar".toCharArray(),
-                    commandInvocation
+            if(commandInvocation.getCommandContext().getModelControllerClient() == null) {
+                connectController(
+                        commandInvocation.getCommandContext().getControllerAddressResolver(),
+                        commandInvocation.getCommandContext().getCliSSLContext(),
+                        commandInvocation.getCommandContext().getControllerHost(),
+                        false, 1000,
+                        //TODO: need the username/password
+                        "foo", "bar".toCharArray(),
+                        commandInvocation );
 
-                    );
+                if(commandInvocation.getCommandContext().getModelControllerClient() != null)
+                    return CommandResult.SUCCESS;
+                else
+                    return CommandResult.FAILURE;
+            }
+            else {
+                commandInvocation.getShell().out().println("Already connected to a session, log out before connecting to a new session.");
+                return CommandResult.SUCCESS;
+            }
         }
         catch (CommandLineException e) {
             e.printStackTrace();
+            return CommandResult.FAILURE;
         }
-        return null;
     }
 
     private void connectController(ControllerAddressResolver addressResolver,

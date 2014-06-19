@@ -23,6 +23,7 @@ import org.jboss.as.cli.command.Quit;
 import org.jboss.as.cli.provider.CliCommandInvocationProvider;
 import org.jboss.as.cli.provider.CliCompleterInvocationProvider;
 import org.jboss.as.cli.provider.CliConverterInvocationProvider;
+import org.jboss.as.cli.provider.CliManProvider;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -82,6 +83,7 @@ public class AeshCliConsole {
                 .commandNotFoundHandler(new CliCommandNotFound())
                 .converterInvocationProvider(new CliConverterInvocationProvider(commandContext))
                 //.validatorInvocationProvider(new CliValidatorInvocationProvider(commandContext))
+                .manProvider(new CliManProvider())
                 .prompt(new Prompt("[disconnected /] "))
                 .create();
 

@@ -1,0 +1,47 @@
+LS(1)
+===========
+:doctype: manpage
+
+
+NAME
+----
+*ls* - list directory contents
+
+
+SYNOPSIS
+--------
+*less* ['OPTIONS'] 'FILE'
+
+
+DESCRIPTION
+-----------
+List information about the FILEs (the current directory by default).
+
+
+OPTIONS
+-------
+
+*-l*::
+     Use a long listing format.
+
+
+BUGS
+----
+yes, we have them
+
+
+AUTHOR
+------
+The Wildfly team
+
+
+RESOURCES
+---------
+wildfly: <http://wildfly.org/>
+
+
+COPYING
+-------
+Copyright 2012 Red Hat, Inc. and/or its affiliates.
+Licensed under the Eclipse Public License version 1.0, available at
+http://www.eclipse.org/legal/epl-v10.html
