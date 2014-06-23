@@ -2,6 +2,7 @@ package org.jboss.as.cli.command;
 
 import org.jboss.aesh.cl.Option;
 import org.jboss.aesh.cl.OptionList;
+import org.jboss.aesh.cl.activation.OptionActivator;
 import org.jboss.aesh.cl.completer.OptionCompleter;
 import org.jboss.aesh.cl.validator.OptionValidator;
 import org.jboss.aesh.cl.validator.OptionValidatorException;
@@ -91,14 +92,15 @@ public class Deploy extends DeploymentHelper implements Command<CliCommandInvoca
                     "NOTE: exploded deployments are supported only as unmanaged.")
     private boolean unmanaged;
 
-    @OptionList(name = "server-groups",
+    @OptionList(name = "server-groups", validator = ServerGroupsValidator.class,
+            activator = DomainActivator.class,
             description = "Comma separated list of server group names the deploy "+
                     "command should apply to. Either server-groups or "+
                     "all-server-groups is required in the domain mode. This "+
                     "argument is not applicable in the standalone mode.")
     private List<String> serverGroups;
 
-    @Option(name = "all-server-groups",
+    @Option(name = "all-server-groups", validator = AllServerGroupsValidator.class,
             description = "indicates that deploy should apply to all the available "+
                         "server groups. Either server-groups or all-server-groups "+
                         "is required in domain mode. This argument is not "+
@@ -167,5 +169,17 @@ public class Deploy extends DeploymentHelper implements Command<CliCommandInvoca
             if(!validatorInvocation.getCommandContext().isDomainMode())
                 throw new OptionValidatorException("--all-server-groups option must only be used in domain mode.");
         }
+    }
+
+    private static class ServerGroupsValidator implements OptionValidator<CliValidatorInvocationImpl> {
+        @Override
+        public void validate(CliValidatorInvocationImpl validatorInvocation) throws OptionValidatorException {
+            if(!validatorInvocation.getCommandContext().isDomainMode())
+                throw new OptionValidatorException("-server-groups option must only be used in domain mode.");
+        }
+    }
+
+    private static class DomainActivator implements OptionActivator {
+
     }
 }
