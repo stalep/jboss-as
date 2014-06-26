@@ -2,14 +2,15 @@ package org.jboss.as.cli.command;
 
 import org.jboss.aesh.cl.Option;
 import org.jboss.aesh.cl.OptionList;
-import org.jboss.aesh.cl.activation.OptionActivator;
+//import org.jboss.aesh.cl.activation.OptionActivator;
 import org.jboss.aesh.cl.completer.OptionCompleter;
 import org.jboss.aesh.cl.validator.OptionValidator;
 import org.jboss.aesh.cl.validator.OptionValidatorException;
 import org.jboss.aesh.console.command.Command;
 import org.jboss.aesh.console.command.CommandResult;
-import org.jboss.aesh.console.command.validator.ValidatorInvocation;
+//import org.jboss.aesh.console.command.validator.ValidatorInvocation;
 import org.jboss.as.cli.Util;
+import org.jboss.as.cli.activator.DomainOptionActivator;
 import org.jboss.as.cli.command.helper.DeploymentHelper;
 import org.jboss.as.cli.provider.CliCompleterInvocation;
 import org.jboss.as.cli.provider.CliValidatorInvocationImpl;
@@ -93,14 +94,16 @@ public class Deploy extends DeploymentHelper implements Command<CliCommandInvoca
     private boolean unmanaged;
 
     @OptionList(name = "server-groups", validator = ServerGroupsValidator.class,
-            activator = DomainActivator.class,
+            activator = DomainOptionActivator.class,
             description = "Comma separated list of server group names the deploy "+
                     "command should apply to. Either server-groups or "+
                     "all-server-groups is required in the domain mode. This "+
                     "argument is not applicable in the standalone mode.")
     private List<String> serverGroups;
 
-    @Option(name = "all-server-groups", validator = AllServerGroupsValidator.class,
+    @Option(name = "all-server-groups",
+            validator = AllServerGroupsValidator.class,
+            activator = DomainOptionActivator.class,
             description = "indicates that deploy should apply to all the available "+
                         "server groups. Either server-groups or all-server-groups "+
                         "is required in domain mode. This argument is not "+
@@ -179,7 +182,4 @@ public class Deploy extends DeploymentHelper implements Command<CliCommandInvoca
         }
     }
 
-    private static class DomainActivator implements OptionActivator {
-
-    }
 }

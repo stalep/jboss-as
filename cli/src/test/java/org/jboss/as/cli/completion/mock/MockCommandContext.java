@@ -181,6 +181,11 @@ public class MockCommandContext implements CommandContext {
         return operationCandidatesProvider;
     }
 
+    @Override
+    public String getPrompt() {
+        return null;
+    }
+
     public void setOperationCandidatesProvider(OperationCandidatesProvider provider) {
         this.operationCandidatesProvider = provider;
     }
@@ -411,4 +416,9 @@ public class MockCommandContext implements CommandContext {
     public CliSSLContext getCliSSLContext() {
         return null;
     }
+
+    @Override
+    public void setCurrentNodePath(OperationRequestAddress address) {
+    }
+
 }
